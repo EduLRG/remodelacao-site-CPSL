@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
+import Users from "./Users";
 import "../styles/Dashboard.css";
 
 const Dashboard = () => {
@@ -97,15 +98,7 @@ const Dashboard = () => {
               }
             />
             {user?.tipo === "Admin" && (
-              <Route
-                path="/utilizadores"
-                element={
-                  <div>
-                    <h2>Gestão de Utilizadores</h2>
-                    <p>Em construção...</p>
-                  </div>
-                }
-              />
+              <Route path="/utilizadores" element={<Users />} />
             )}
           </Routes>
         </div>

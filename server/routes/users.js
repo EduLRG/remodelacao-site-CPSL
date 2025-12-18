@@ -249,4 +249,59 @@ router.delete("/:id", [authenticate, isAdmin], async (req, res) => {
   }
 });
 
+// @route   PATCH /api/users/:id/toggle-status
+// @desc    Alternar estado ativo/inativo do utilizador
+// @access  Private (Admin)
+router.patch(
+  "/:id/toggle-status",
+  [authenticate, isAdmin],
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Não permitir que admin desative a si próprio
+      if (parseInt(id) === req.user.id) {
+        return res.status(400).json({
+          success: false,
+          message: "Não pode alterar o estado da sua própria conta.",
+        });
+      }
+
+      // Obter estado atual
+      const [user] = await pool.query(
+        "SELECT id, ativo FROM Utilizadores WHERE id = ?",
+        [id]
+      );
+
+      if (user.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Utilizador não encontrado.",
+        });
+      }
+
+      // Alternar estado
+      const newStatus = !user[0].ativo;
+      await pool.query("UPDATE Utilizadores SET ativo = ? WHERE id = ?", [
+        newStatus,
+        id,
+      ]);
+
+      res.json({
+        success: true,
+        message: `Utilizador ${
+          newStatus ? "ativado" : "desativado"
+        } com sucesso.`,
+        data: { ativo: newStatus },
+      });
+    } catch (error) {
+      console.error("Erro ao alternar estado do utilizador:", error);
+      res.status(500).json({
+        success: false,
+        message: "Erro no servidor.",
+      });
+    }
+  }
+);
+
 module.exports = router;
