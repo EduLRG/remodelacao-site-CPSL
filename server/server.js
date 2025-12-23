@@ -24,13 +24,13 @@ if (fs.existsSync(rootEnv)) {
 const app = express();
 
 // Global error handlers to avoid the process exiting unexpectedly in dev
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
   // optionally: send to monitoring service
 });
 
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception thrown:', err);
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception thrown:", err);
   // Note: in production you may want to shutdown the process gracefully
 });
 
@@ -55,7 +55,10 @@ app.use(
       if (!origin) return callback(null, true);
 
       // Permitir qualquer origin localhost em ambiente de desenvolvimento
-      if (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost')) {
+      if (
+        process.env.NODE_ENV !== "production" &&
+        origin.startsWith("http://localhost")
+      ) {
         return callback(null, true);
       }
 
@@ -75,7 +78,7 @@ app.use(express.urlencoded({ extended: true }));
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // limite de 100 requests por windowMs
+  max: process.env.NODE_ENV === "production" ? 100 : 1000, // 1000 em dev, 100 em produção
   message: "Demasiados pedidos deste IP, tente novamente mais tarde.",
 });
 app.use("/api/", limiter);
@@ -83,19 +86,19 @@ app.use("/api/", limiter);
 // Servir ficheiros estáticos (uploads)
 // Middleware para resolver URLs de uploads que omitem a subpasta (ex: /uploads/<file>)
 // tenta servir o ficheiro diretamente ou procurar em subpastas comuns (imagens, videos, pdfs)
-app.use('/uploads', (req, res, next) => {
+app.use("/uploads", (req, res, next) => {
   // Allow cross-origin use of uploaded resources (images) from the client app
   // Some helmet defaults set Cross-Origin-Resource-Policy to 'same-origin' which blocks
   // images served from port 4000 when the frontend runs on 3000. Set to 'cross-origin'.
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  const rel = req.path.replace(/^\//, '');
-  const root = path.resolve(__dirname, '..', 'uploads');
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  const rel = req.path.replace(/^\//, "");
+  const root = path.resolve(__dirname, "..", "uploads");
   const tryPath = path.join(root, rel);
   if (fs.existsSync(tryPath)) {
     return res.sendFile(tryPath);
   }
   // procurar em subpastas comuns
-  const subfolders = ['imagens', 'videos', 'pdfs', 'outros'];
+  const subfolders = ["imagens", "videos", "pdfs", "outros"];
   for (const f of subfolders) {
     const alt = path.join(root, f, rel);
     if (fs.existsSync(alt)) return res.sendFile(alt);

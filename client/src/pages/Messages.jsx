@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { AuthContext } from "../contexts/AuthContext";
 import "../styles/Messages.css";
 
 const Messages = () => {
+  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const [mensagens, setMensagens] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +21,9 @@ const Messages = () => {
         const map = new Map();
         raw.forEach((it) => {
           if (!it) return;
-          const key = `${it.nome || ''}|${it.email || ''}|${it.assunto || ''}|${it.mensagem || ''}`;
+          const key = `${it.nome || ""}|${it.email || ""}|${it.assunto || ""}|${
+            it.mensagem || ""
+          }`;
           // keep the first occurrence (or you could keep the latest by timestamp)
           if (!map.has(key)) map.set(key, it);
         });
@@ -31,8 +35,12 @@ const Messages = () => {
         setMensagens(unique);
         // also dispatch exact server unread count (before dedupe) so other components can rely on server truth
         try {
-          const rawUnread = (resp.data.data || []).filter((it) => !it.respondido).length;
-          const evServer = new CustomEvent("mensagens:server", { detail: { unread: rawUnread } });
+          const rawUnread = (resp.data.data || []).filter(
+            (it) => !it.respondido
+          ).length;
+          const evServer = new CustomEvent("mensagens:server", {
+            detail: { unread: rawUnread },
+          });
           window.dispatchEvent(evServer);
         } catch (e) {
           // ignore
@@ -55,17 +63,25 @@ const Messages = () => {
       if (resp.data && resp.data.success) {
         setSelected(resp.data.data);
         // optimistically mark as read in UI so header count updates immediately
-        setMensagens((prev) => prev.map((it) => (it.id === resp.data.data.id ? { ...it, respondido: true } : it)));
+        setMensagens((prev) =>
+          prev.map((it) =>
+            it.id === resp.data.data.id ? { ...it, respondido: true } : it
+          )
+        );
         markRead(resp.data.data.id);
       } else {
         setSelected(m);
-        setMensagens((prev) => prev.map((it) => (it.id === m.id ? { ...it, respondido: true } : it)));
+        setMensagens((prev) =>
+          prev.map((it) => (it.id === m.id ? { ...it, respondido: true } : it))
+        );
         markRead(m.id);
       }
     } catch (err) {
       console.error("Erro ao obter mensagem:", err);
       setSelected(m);
-      setMensagens((prev) => prev.map((it) => (it.id === m.id ? { ...it, respondido: true } : it)));
+      setMensagens((prev) =>
+        prev.map((it) => (it.id === m.id ? { ...it, respondido: true } : it))
+      );
       markRead(m.id);
     }
   };
@@ -74,16 +90,20 @@ const Messages = () => {
     try {
       await api.put(`/mensagens/${id}/read`);
       // successful on server; we've already optimistically updated local state in openMessage
-      if (selected && selected.id === id) setSelected({ ...selected, respondido: true });
+      if (selected && selected.id === id)
+        setSelected({ ...selected, respondido: true });
     } catch (err) {
       // revert optimistic update if server fails
-      setMensagens((prev) => prev.map((it) => (it.id === id ? { ...it, respondido: false } : it)));
+      setMensagens((prev) =>
+        prev.map((it) => (it.id === id ? { ...it, respondido: false } : it))
+      );
       console.error(err);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Tem certeza que deseja eliminar esta mensagem?")) return;
+    if (!window.confirm("Tem certeza que deseja eliminar esta mensagem?"))
+      return;
     try {
       await api.delete(`/mensagens/${id}`);
       // remove locally immediately so UI updates without full refresh
@@ -112,9 +132,15 @@ const Messages = () => {
 
   return (
     <div className="messages-page">
+      <button className="btn-back" onClick={() => navigate("/dashboard")}>
+        ← Voltar
+      </button>
+
       <div className="messages-header">
         <h2>Mensagens ({unreadCount} novas)</h2>
-        <button onClick={fetchMensagens} className="btn-refresh">🔄 Atualizar</button>
+        <button onClick={fetchMensagens} className="btn-refresh">
+          🔄 Atualizar
+        </button>
       </div>
 
       {loading ? (
@@ -125,16 +151,31 @@ const Messages = () => {
         <div className="messages-list">
           <ul>
             {mensagens.map((m) => (
-              <li key={m.id} className={`message-item ${m.respondido ? 'read' : 'unread'}`}>
+              <li
+                key={m.id}
+                className={`message-item ${m.respondido ? "read" : "unread"}`}
+              >
                 <div className="msg-left" onClick={() => openMessage(m)}>
                   <strong className="msg-name">{m.nome}</strong>
                   <div className="msg-subject">{m.assunto}</div>
-                  <div className="msg-meta">{m.email} • {new Date(m.data_submissao || m.created_at).toLocaleString('pt-PT')}</div>
+                  <div className="msg-meta">
+                    {m.email} •{" "}
+                    {new Date(m.data_submissao || m.created_at).toLocaleString(
+                      "pt-PT"
+                    )}
+                  </div>
                 </div>
                 <div className="msg-actions">
                   {/* keep only Ver and Eliminar per request */}
-                  <button onClick={() => openMessage(m)} className="btn-small">Ver</button>
-                  <button onClick={() => handleDelete(m.id)} className="btn-small btn-delete">🗑️</button>
+                  <button onClick={() => openMessage(m)} className="btn-small">
+                    Ver
+                  </button>
+                  <button
+                    onClick={() => handleDelete(m.id)}
+                    className="btn-small btn-delete"
+                  >
+                    🗑️
+                  </button>
                 </div>
               </li>
             ))}
@@ -144,22 +185,40 @@ const Messages = () => {
 
       {selected && (
         <div className="message-modal" onClick={() => setSelected(null)}>
-          <div className="message-modal-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="message-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3>{selected.assunto}</h3>
-            <p><strong>De:</strong> {selected.nome} • {selected.email}</p>
-            <p><strong>Data:</strong> {new Date(selected.data_submissao || selected.created_at).toLocaleString('pt-PT')}</p>
+            <p>
+              <strong>De:</strong> {selected.nome} • {selected.email}
+            </p>
+            <p>
+              <strong>Data:</strong>{" "}
+              {new Date(
+                selected.data_submissao || selected.created_at
+              ).toLocaleString("pt-PT")}
+            </p>
             <hr />
-            <p><strong>Mensagem:</strong></p>
-            <div className="message-body"><pre style={{whiteSpace:'pre-wrap'}}>{selected.mensagem}</pre></div>
+            <p>
+              <strong>Mensagem:</strong>
+            </p>
+            <div className="message-body">
+              <pre style={{ whiteSpace: "pre-wrap" }}>{selected.mensagem}</pre>
+            </div>
 
-            <div className="reply-actions" style={{justifyContent:'flex-end', marginTop:12}}>
+            <div
+              className="reply-actions"
+              style={{ justifyContent: "flex-end", marginTop: 12 }}
+            >
               {/* Only provide Fechar per request */}
-              <button onClick={() => setSelected(null)} className="btn-cancel">Fechar</button>
+              <button onClick={() => setSelected(null)} className="btn-cancel">
+                Fechar
+              </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };

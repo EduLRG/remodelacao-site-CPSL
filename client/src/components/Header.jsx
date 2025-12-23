@@ -71,24 +71,40 @@ const Header = ({ sections = [], isEditMode = false }) => {
     }
   };
 
-  const scrollToTop = () => {
-    if (location.pathname === "/") {
+  const scrollToTop = (e) => {
+    e.preventDefault();
+    setIsMobileMenuOpen(false);
+
+    // Se estamos no dashboard, apenas fazer scroll
+    if (isEditMode || location.pathname.startsWith("/dashboard")) {
       window.scrollTo({
         top: 0,
         behavior: "smooth",
       });
+      return;
     }
-    setIsMobileMenuOpen(false);
+
+    // Se não estamos na home, navegar para lá
+    if (location.pathname !== "/") {
+      window.location.href = "/";
+      return;
+    }
+
+    // Se já estamos na home, fazer scroll ao topo
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   return (
     <header className={`main-header ${isScrolled ? "scrolled" : ""}`}>
       <div className="header-container">
         <div className="header-logo">
-          <Link to="/" onClick={scrollToTop}>
+          <a href="#top" onClick={scrollToTop}>
             <h1>CPSL</h1>
             <span>Centro Paroquial e Social de Lanheses</span>
-          </Link>
+          </a>
         </div>
 
         <button

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../styles/Users.css";
 
 const Users = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -126,6 +128,10 @@ const Users = () => {
 
   return (
     <div className="users-page">
+      <button className="btn-back" onClick={() => navigate("/dashboard")}>
+        ← Voltar
+      </button>
+
       <div className="users-header">
         <h2>Gestão de Utilizadores</h2>
         <button className="btn-primary" onClick={() => setShowModal(true)}>

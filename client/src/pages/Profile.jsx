@@ -1,9 +1,11 @@
 import React, { useContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
 import api from "../services/api";
 import "../styles/Profile.css";
 
 const Profile = () => {
+  const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
   const [users, setUsers] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -78,6 +80,10 @@ const Profile = () => {
 
   return (
     <div className="profile-page">
+      <button className="btn-back" onClick={() => navigate("/dashboard")}>
+        ← Voltar
+      </button>
+
       <div className="profile-container">
         {/* Informações do Utilizador Atual */}
         <section className="profile-info">

@@ -5,21 +5,28 @@ import { AuthContext } from "../contexts/AuthContext";
 import "../styles/Home.css";
 
 // Local SVG placeholder (data URI) to avoid external requests to via.placeholder.com
-const PLACEHOLDER_SVG = `data:image/svg+xml;utf8,` + encodeURIComponent(
-  `<svg xmlns='http://www.w3.org/2000/svg' width='800' height='400'><rect fill='#f6f7fb' width='100%' height='100%'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#888' font-size='28' font-family='Arial, sans-serif'>Imagem</text></svg>`
-);
+const PLACEHOLDER_SVG =
+  `data:image/svg+xml;utf8,` +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='800' height='400'><rect fill='#f6f7fb' width='100%' height='100%'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#888' font-size='28' font-family='Arial, sans-serif'>Imagem</text></svg>`
+  );
 
 // Editor simples baseado em contentEditable (compatível com React 19+)
 function RichTextEditor({ value, onChange, api }) {
   const editorRef = useRef(null);
-  const [formats, setFormats] = useState({ bold: false, italic: false, underline: false, list: false });
+  const [formats, setFormats] = useState({
+    bold: false,
+    italic: false,
+    underline: false,
+    list: false,
+  });
 
   // Upload de imagem para /api/media e retorna URL absoluto
   const uploadImage = async (file) => {
     try {
       const formData = new FormData();
       formData.append("file", file);
-  formData.append("tabela_referencia", "noticias_eventos");
+      formData.append("tabela_referencia", "noticias_eventos");
 
       const response = await api.post("/media", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -49,8 +56,10 @@ function RichTextEditor({ value, onChange, api }) {
     // update our internal formats state only when user clicked toolbar
     if (command === "bold") setFormats((p) => ({ ...p, bold: !p.bold }));
     if (command === "italic") setFormats((p) => ({ ...p, italic: !p.italic }));
-    if (command === "underline") setFormats((p) => ({ ...p, underline: !p.underline }));
-    if (command === "insertUnorderedList") setFormats((p) => ({ ...p, list: !p.list }));
+    if (command === "underline")
+      setFormats((p) => ({ ...p, underline: !p.underline }));
+    if (command === "insertUnorderedList")
+      setFormats((p) => ({ ...p, list: !p.list }));
   };
 
   // Formats are updated only when the toolbar buttons are clicked (see exec()).
@@ -99,22 +108,58 @@ function RichTextEditor({ value, onChange, api }) {
   return (
     <div className="richtext-editor">
       <div className="rt-toolbar">
-        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("bold")} title="Bold" className={`rt-btn ${formats.bold ? 'active' : ''}`}>
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => exec("bold")}
+          title="Bold"
+          className={`rt-btn ${formats.bold ? "active" : ""}`}
+        >
           <strong>B</strong>
         </button>
-        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("italic")} title="Italic" className={`rt-btn ${formats.italic ? 'active' : ''}`}>
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => exec("italic")}
+          title="Italic"
+          className={`rt-btn ${formats.italic ? "active" : ""}`}
+        >
           <em>I</em>
         </button>
-        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("underline")} title="Underline" className={`rt-btn ${formats.underline ? 'active' : ''}`}>
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => exec("underline")}
+          title="Underline"
+          className={`rt-btn ${formats.underline ? "active" : ""}`}
+        >
           <u>U</u>
         </button>
-        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => exec("insertUnorderedList")} title="Bullet" className={`rt-btn ${formats.list ? 'active' : ''}`}>
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => exec("insertUnorderedList")}
+          title="Bullet"
+          className={`rt-btn ${formats.list ? "active" : ""}`}
+        >
           • Lista
         </button>
-        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={handleInsertLink} title="Adicionar hiperligação" className="rt-btn rt-btn-link">
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={handleInsertLink}
+          title="Adicionar hiperligação"
+          className="rt-btn rt-btn-link"
+        >
           + adicionar hiperligacao
         </button>
-        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={handleImagePick} title="Adicionar fotografia" className="rt-btn rt-btn-image">
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={handleImagePick}
+          title="Adicionar fotografia"
+          className="rt-btn rt-btn-image"
+        >
           🖼️
         </button>
         <select
@@ -133,7 +178,9 @@ function RichTextEditor({ value, onChange, api }) {
         contentEditable
         className="rt-editor-area"
         onInput={(e) => onChange(e.currentTarget.innerHTML)}
-        onDoubleClick={(e) => e.preventDefault()} /* prevent double-click from triggering format toggles */
+        onDoubleClick={(e) =>
+          e.preventDefault()
+        } /* prevent double-click from triggering format toggles */
         onFocus={() => {
           // compute real format state at caret/selection and sync toolbar icons
           try {
@@ -145,19 +192,20 @@ function RichTextEditor({ value, onChange, api }) {
             if (sel && sel.rangeCount > 0) {
               // prefer queryCommandState if available
               try {
-                bold = document.queryCommandState('bold');
-                italic = document.queryCommandState('italic');
-                underline = document.queryCommandState('underline');
-                list = document.queryCommandState('insertUnorderedList');
+                bold = document.queryCommandState("bold");
+                italic = document.queryCommandState("italic");
+                underline = document.queryCommandState("underline");
+                list = document.queryCommandState("insertUnorderedList");
               } catch (e) {
                 // fallback: inspect ancestor nodes
                 const node = sel.anchorNode;
-                const el = node && node.nodeType === 3 ? node.parentElement : node;
+                const el =
+                  node && node.nodeType === 3 ? node.parentElement : node;
                 if (el) {
-                  bold = !!el.closest && !!el.closest('strong, b');
-                  italic = !!el.closest && !!el.closest('em, i');
-                  underline = !!el.closest && !!el.closest('u');
-                  list = !!el.closest && !!el.closest('ul, ol');
+                  bold = !!el.closest && !!el.closest("strong, b");
+                  italic = !!el.closest && !!el.closest("em, i");
+                  underline = !!el.closest && !!el.closest("u");
+                  list = !!el.closest && !!el.closest("ul, ol");
                 }
               }
             }
@@ -178,17 +226,17 @@ function stripHtml(html) {
   return html.replace(/<[^>]*>/g, "");
 }
 
-  // normalize initial HTML so we don't start with an outer strong/b tag which makes typing bold by default
-  function normalizeInitialHtml(html) {
-    if (!html) return "";
-    let out = html.trim();
-    // remove wrapping <strong> or <b> if entire content is inside it
-    out = out.replace(/^<(strong|b)>([\s\S]*)<\/(strong|b)>$/i, "$2");
-    // remove empty strong around whitespace
-    out = out.replace(/<strong>\s*<\/strong>/gi, "");
-    out = out.replace(/<b>\s*<\/b>/gi, "");
-    return out;
-  }
+// normalize initial HTML so we don't start with an outer strong/b tag which makes typing bold by default
+function normalizeInitialHtml(html) {
+  if (!html) return "";
+  let out = html.trim();
+  // remove wrapping <strong> or <b> if entire content is inside it
+  out = out.replace(/^<(strong|b)>([\s\S]*)<\/(strong|b)>$/i, "$2");
+  // remove empty strong around whitespace
+  out = out.replace(/<strong>\s*<\/strong>/gi, "");
+  out = out.replace(/<b>\s*<\/b>/gi, "");
+  return out;
+}
 
 const Home = ({ isEditMode = false }) => {
   const [projects, setProjects] = useState([]);
@@ -211,22 +259,26 @@ const Home = ({ isEditMode = false }) => {
   // Upload cover image (imagem_destaque) and set editingData.imagem_destaque
   const uploadCoverImage = async (file) => {
     try {
-  // show placeholder immediately while upload runs
-  const placeholderBase = api.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
-  setEditingData((d) => ({ ...d, imagem_destaque: `${placeholderBase}${PLACEHOLDER_SVG}` }));
+      // show placeholder immediately while upload runs
+      const placeholderBase =
+        api.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
+      setEditingData((d) => ({
+        ...d,
+        imagem_destaque: `${placeholderBase}${PLACEHOLDER_SVG}`,
+      }));
 
       const formData = new FormData();
       formData.append("file", file);
-  formData.append("tabela_referencia", "noticias_eventos");
+      formData.append("tabela_referencia", "noticias_eventos");
       // id_referencia could be null for now
       const response = await api.post("/media", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-  let url = response.data?.data?.url;
-  if (!url) throw new Error("Upload não retornou URL");
-  const base = api.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
-  url = url.startsWith("http") ? url : `${base}${url}`;
-  setEditingData((d) => ({ ...d, imagem_destaque: url }));
+      let url = response.data?.data?.url;
+      if (!url) throw new Error("Upload não retornou URL");
+      const base = api.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
+      url = url.startsWith("http") ? url : `${base}${url}`;
+      setEditingData((d) => ({ ...d, imagem_destaque: url }));
     } catch (err) {
       console.error("Erro ao enviar imagem de capa:", err);
       alert("Erro ao enviar imagem de capa.");
@@ -311,13 +363,19 @@ const Home = ({ isEditMode = false }) => {
           const base = api.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
           const normalized = (response.data.data || []).map((n) => {
             const obj = { ...n };
-            if (obj.imagem_destaque && !obj.imagem_destaque.startsWith("http")) {
+            if (
+              obj.imagem_destaque &&
+              !obj.imagem_destaque.startsWith("http")
+            ) {
               obj.imagem_destaque = `${base}${obj.imagem_destaque}`;
             }
             if (Array.isArray(obj.media)) {
               obj.media = obj.media.map((m) => ({
                 ...m,
-                url: m.url && !m.url.startsWith("http") ? `${base}${m.url}` : m.url,
+                url:
+                  m.url && !m.url.startsWith("http")
+                    ? `${base}${m.url}`
+                    : m.url,
               }));
             }
             return obj;
@@ -628,7 +686,7 @@ const Home = ({ isEditMode = false }) => {
                         alt={project.titulo}
                         className="project-image"
                         onError={(e) => {
-                            e.target.src = PLACEHOLDER_SVG;
+                          e.target.src = PLACEHOLDER_SVG;
                         }}
                       />
                     ) : (
@@ -644,26 +702,98 @@ const Home = ({ isEditMode = false }) => {
                     )}
                   </div>
 
-                    <div className="project-info">
-                      <h3>
-                        {project.titulo}
-                        {project.url_externa && (
-                          <span className="link-icon">🔗</span>
-                        )}
-                      </h3>
-                      <p className="project-description">{project.descricao}</p>
-                      {project.data_inicio && (
-                        <p className="project-date">🗓️ Início: {new Date(project.data_inicio).toLocaleDateString("pt-PT")}</p>
+                  <div className="project-info">
+                    <h3>
+                      {project.titulo}
+                      {project.url_externa && (
+                        <span className="link-icon">🔗</span>
                       )}
-                    </div>
+                    </h3>
+                    <p className="project-description">{project.descricao}</p>
+                    {project.data_inicio && (
+                      <p className="project-date">
+                        🗓️ Início:{" "}
+                        {new Date(project.data_inicio).toLocaleDateString(
+                          "pt-PT"
+                        )}
+                      </p>
+                    )}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section id="respostas-sociais" className="section">
+        <div className="container">
+          <div className="section-header-editable">
+            <h2>Respostas Sociais</h2>
+            {isEditMode && user && (
+              <button
+                className="btn-add-subsection"
+                onClick={() => handleAddSubsection("respostas-sociais")}
+                title="Adicionar resposta social"
+              >
+                ➥ Adicionar
+              </button>
             )}
           </div>
-        </section>
 
-        <section id="noticias" className="section">
+          {loadingRespostas ? (
+            <p>A carregar respostas sociais...</p>
+          ) : respostasSociais.length === 0 ? (
+            <p>Oferecemos diversos serviços de apoio à comunidade.</p>
+          ) : (
+            <div className="institutional-content">
+              {respostasSociais.map((resposta) => (
+                <div key={resposta.id} className="content-subsection">
+                  <div className="subsection-header">
+                    <h3>{resposta.titulo}</h3>
+                    {isEditMode && user && (
+                      <div className="subsection-actions">
+                        <button
+                          className="btn-edit-inline"
+                          onClick={() =>
+                            handleEdit(
+                              "respostas-sociais",
+                              resposta,
+                              resposta.id
+                            )
+                          }
+                          title="Editar"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="btn-delete-inline"
+                          onClick={() =>
+                            handleDelete(resposta.id, "respostas-sociais")
+                          }
+                          title="Eliminar"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <p>{resposta.descricao}</p>
+                  {resposta.imagem_destaque && (
+                    <img
+                      src={resposta.imagem_destaque}
+                      alt={resposta.titulo}
+                      className="content-image"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section id="noticias" className="section">
         <div className="container">
           <div className="section-header-editable">
             <h2>Notícias e Eventos</h2>
@@ -699,7 +829,7 @@ const Home = ({ isEditMode = false }) => {
                       alt={noticia.titulo}
                       className="noticia-image"
                       onError={(e) => {
-                        console.warn('Imagem não encontrada:', e.target.src);
+                        console.warn("Imagem não encontrada:", e.target.src);
                         e.target.src = PLACEHOLDER_SVG;
                       }}
                     />
@@ -708,12 +838,16 @@ const Home = ({ isEditMode = false }) => {
                   <div className="noticia-body">
                     <h3 className="noticia-title">{noticia.titulo}</h3>
                     <p className="noticia-summary">
-                      {noticia.resumo || (stripHtml(noticia.conteudo || "").slice(0, 200) + "...")}
+                      {noticia.resumo ||
+                        stripHtml(noticia.conteudo || "").slice(0, 200) + "..."}
                     </p>
                   </div>
 
                   <p className="noticia-date">
-                    📅 {new Date(noticia.data_publicacao || noticia.created_at).toLocaleDateString("pt-PT")}
+                    📅{" "}
+                    {new Date(
+                      noticia.data_publicacao || noticia.created_at
+                    ).toLocaleDateString("pt-PT")}
                   </p>
 
                   {isEditMode && user && (
@@ -794,16 +928,16 @@ const Home = ({ isEditMode = false }) => {
                     mensagem: form.mensagem.value,
                   };
                   try {
-                    const resp = await api.post('/contactos/form', data);
+                    const resp = await api.post("/contactos/form", data);
                     if (resp.data && resp.data.success) {
-                      alert('Mensagem enviada. Obrigado!');
+                      alert("Mensagem enviada. Obrigado!");
                       form.reset();
                     } else {
-                      alert('Erro ao enviar mensagem.');
+                      alert("Erro ao enviar mensagem.");
                     }
                   } catch (err) {
                     console.error(err);
-                    alert('Erro ao enviar mensagem.');
+                    alert("Erro ao enviar mensagem.");
                   }
                 }}
               >
@@ -812,7 +946,12 @@ const Home = ({ isEditMode = false }) => {
                     <label htmlFor="nome">Nome</label>
                     <div className="input-with-icon">
                       <span className="input-icon">👤</span>
-                      <input id="nome" name="nome" placeholder="Nome" required />
+                      <input
+                        id="nome"
+                        name="nome"
+                        placeholder="Nome"
+                        required
+                      />
                     </div>
                   </div>
 
@@ -820,7 +959,13 @@ const Home = ({ isEditMode = false }) => {
                     <label htmlFor="email">Email</label>
                     <div className="input-with-icon">
                       <span className="input-icon">✉️</span>
-                      <input id="email" name="email" type="email" placeholder="Email" required />
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="Email"
+                        required
+                      />
                     </div>
                   </div>
                 </div>
@@ -829,17 +974,30 @@ const Home = ({ isEditMode = false }) => {
                   <label htmlFor="assunto">Assunto</label>
                   <div className="input-with-icon">
                     <span className="input-icon">📝</span>
-                    <input id="assunto" name="assunto" placeholder="Assunto" required />
+                    <input
+                      id="assunto"
+                      name="assunto"
+                      placeholder="Assunto"
+                      required
+                    />
                   </div>
                 </div>
 
                 <div className="form-field message-field">
                   <label htmlFor="mensagem">Mensagem</label>
-                  <textarea id="mensagem" name="mensagem" rows="6" placeholder="Mensagem" required />
+                  <textarea
+                    id="mensagem"
+                    name="mensagem"
+                    rows="6"
+                    placeholder="Mensagem"
+                    required
+                  />
                 </div>
 
                 <div className="form-actions" style={{ marginTop: 10 }}>
-                  <button type="submit" className="btn-save">Enviar Mensagem</button>
+                  <button type="submit" className="btn-save">
+                    Enviar Mensagem
+                  </button>
                 </div>
               </form>
             </div>
@@ -958,11 +1116,13 @@ const Home = ({ isEditMode = false }) => {
                               alt="Capa"
                               className="cover-preview"
                               onError={(e) => {
-                                    e.target.src = PLACEHOLDER_SVG;
-                                  }}
+                                e.target.src = PLACEHOLDER_SVG;
+                              }}
                             />
                           ) : (
-                            <div className="cover-placeholder">Nenhuma imagem de capa</div>
+                            <div className="cover-placeholder">
+                              Nenhuma imagem de capa
+                            </div>
                           )}
                           <div className="cover-actions">
                             <input
@@ -973,7 +1133,9 @@ const Home = ({ isEditMode = false }) => {
                                 if (f) await uploadCoverImage(f);
                               }}
                             />
-                            <small className="hint">Enviar imagem de capa (aparece antes do título)</small>
+                            <small className="hint">
+                              Enviar imagem de capa (aparece antes do título)
+                            </small>
                           </div>
                         </div>
                       </label>
@@ -1017,7 +1179,10 @@ const Home = ({ isEditMode = false }) => {
                         <textarea
                           value={editingData.resumo || ""}
                           onChange={(e) =>
-                            setEditingData({ ...editingData, resumo: e.target.value })
+                            setEditingData({
+                              ...editingData,
+                              resumo: e.target.value,
+                            })
                           }
                           rows="3"
                           placeholder="Resumo da notícia"
@@ -1102,11 +1267,19 @@ const Home = ({ isEditMode = false }) => {
 
       {/* Modal de Visualização da Notícia */}
       {showNewsModal && selectedNews && (
-        <div className="edit-modal-overlay" onClick={() => setShowNewsModal(false)}>
+        <div
+          className="edit-modal-overlay"
+          onClick={() => setShowNewsModal(false)}
+        >
           <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
             <div className="edit-modal-header">
               <h3>{selectedNews.titulo}</h3>
-              <button className="btn-close" onClick={() => setShowNewsModal(false)}>✕</button>
+              <button
+                className="btn-close"
+                onClick={() => setShowNewsModal(false)}
+              >
+                ✕
+              </button>
             </div>
             <div className="edit-modal-body">
               {/* Capa */}
@@ -1123,20 +1296,28 @@ const Home = ({ isEditMode = false }) => {
 
               {/* Resumo */}
               {selectedNews.resumo && (
-                <p className="noticia-summary" style={{ marginTop: 8 }}>{selectedNews.resumo}</p>
+                <p className="noticia-summary" style={{ marginTop: 8 }}>
+                  {selectedNews.resumo}
+                </p>
               )}
 
               {/* Conteúdo HTML */}
               <div
                 className="noticia-conteudo"
-                dangerouslySetInnerHTML={{ __html: selectedNews.conteudo || "" }}
+                dangerouslySetInnerHTML={{
+                  __html: selectedNews.conteudo || "",
+                }}
               />
 
               {/* Imagens adicionais associadas (media) */}
               {selectedNews.media && selectedNews.media.length > 0 && (
                 <div className="noticia-media-gallery">
                   {selectedNews.media
-                    .filter((m) => m.url !== selectedNews.imagem_destaque && (!m.tipo || m.tipo.includes("imagem")))
+                    .filter(
+                      (m) =>
+                        m.url !== selectedNews.imagem_destaque &&
+                        (!m.tipo || m.tipo.includes("imagem"))
+                    )
                     .map((m) => (
                       <img
                         key={m.id || m.url}
@@ -1144,7 +1325,10 @@ const Home = ({ isEditMode = false }) => {
                         alt={m.titulo || "imagem"}
                         className="noticia-additional-image"
                         onError={(e) => {
-                          console.warn('Imagem adicional não encontrada:', e.target.src);
+                          console.warn(
+                            "Imagem adicional não encontrada:",
+                            e.target.src
+                          );
                           e.target.src = PLACEHOLDER_SVG;
                         }}
                       />
@@ -1152,10 +1336,18 @@ const Home = ({ isEditMode = false }) => {
                 </div>
               )}
             </div>
-            <div className="edit-modal-footer" style={{ justifyContent: 'space-between' }}>
+            <div
+              className="edit-modal-footer"
+              style={{ justifyContent: "space-between" }}
+            >
               <div />
-              <div style={{ textAlign: 'right' }}>
-                <small className="project-date">📅 {new Date(selectedNews.data_publicacao || selectedNews.created_at).toLocaleDateString('pt-PT')}</small>
+              <div style={{ textAlign: "right" }}>
+                <small className="project-date">
+                  📅{" "}
+                  {new Date(
+                    selectedNews.data_publicacao || selectedNews.created_at
+                  ).toLocaleDateString("pt-PT")}
+                </small>
               </div>
             </div>
           </div>
@@ -1203,7 +1395,9 @@ const Home = ({ isEditMode = false }) => {
                             }}
                           />
                         ) : (
-                          <div className="cover-placeholder">Nenhuma imagem de capa</div>
+                          <div className="cover-placeholder">
+                            Nenhuma imagem de capa
+                          </div>
                         )}
                         <div className="cover-actions">
                           <input
@@ -1214,7 +1408,9 @@ const Home = ({ isEditMode = false }) => {
                               if (f) await uploadCoverImage(f);
                             }}
                           />
-                          <small className="hint">Enviar imagem de capa (aparece antes do título)</small>
+                          <small className="hint">
+                            Enviar imagem de capa (aparece antes do título)
+                          </small>
                         </div>
                       </div>
                     </label>
@@ -1248,7 +1444,10 @@ const Home = ({ isEditMode = false }) => {
                       <textarea
                         value={editingData.resumo || ""}
                         onChange={(e) =>
-                          setEditingData({ ...editingData, resumo: e.target.value })
+                          setEditingData({
+                            ...editingData,
+                            resumo: e.target.value,
+                          })
                         }
                         rows="3"
                         placeholder="Breve resumo da notícia"

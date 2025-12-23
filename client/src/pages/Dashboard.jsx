@@ -4,7 +4,6 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
 import Users from "./Users";
 import ProjectsManagement from "./ProjectsManagement";
-import ContentManagement from "./ContentManagement";
 import Home from "./Home";
 import Profile from "./Profile";
 import Messages from "./Messages";
@@ -18,8 +17,9 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchUnread = async () => {
       try {
-        const resp = await api.get('/mensagens?respondido=false');
-        if (resp.data && resp.data.success) setUnread((resp.data.data || []).length);
+        const resp = await api.get("/mensagens?respondido=false");
+        if (resp.data && resp.data.success)
+          setUnread((resp.data.data || []).length);
       } catch (e) {
         // ignore
       }
@@ -27,24 +27,26 @@ const Dashboard = () => {
     fetchUnread();
     // listen to messages updates from Messages component
     const handler = (e) => {
-      if (e && e.detail && typeof e.detail.unread === 'number') setUnread(e.detail.unread);
+      if (e && e.detail && typeof e.detail.unread === "number")
+        setUnread(e.detail.unread);
     };
     const handlerServer = (e) => {
-      if (e && e.detail && typeof e.detail.unread === 'number') setUnread(e.detail.unread);
+      if (e && e.detail && typeof e.detail.unread === "number")
+        setUnread(e.detail.unread);
     };
-    window.addEventListener('mensagens:updated', handler);
-    window.addEventListener('mensagens:server', handlerServer);
+    window.addEventListener("mensagens:updated", handler);
+    window.addEventListener("mensagens:server", handlerServer);
 
     // also refetch when window/tab becomes visible to ensure accurate badge after background changes
     const onVisible = () => {
-      if (document.visibilityState === 'visible') fetchUnread();
+      if (document.visibilityState === "visible") fetchUnread();
     };
-    document.addEventListener('visibilitychange', onVisible);
+    document.addEventListener("visibilitychange", onVisible);
 
     return () => {
-      window.removeEventListener('mensagens:updated', handler);
-      window.removeEventListener('mensagens:server', handlerServer);
-      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener("mensagens:updated", handler);
+      window.removeEventListener("mensagens:server", handlerServer);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 
@@ -60,12 +62,6 @@ const Dashboard = () => {
         </div>
         <div className="admin-bar-right">
           <button
-            onClick={() => navigate("/dashboard")}
-            className="btn-admin-action"
-          >
-            🏠 Home
-          </button>
-          <button
             onClick={() => navigate("/dashboard/projetos")}
             className="btn-admin-action"
           >
@@ -76,13 +72,8 @@ const Dashboard = () => {
             className="btn-admin-action"
             title="Mensagens"
           >
-            ✉️ Mensagens {unread > 0 && <span className="badge-dot" aria-hidden="true" />}
-          </button>
-          <button
-            onClick={() => navigate("/dashboard/conteudo")}
-            className="btn-admin-action"
-          >
-            ✏️ Gerir Conteúdo
+            ✉️ Mensagens{" "}
+            {unread > 0 && <span className="badge-dot" aria-hidden="true" />}
           </button>
           {user?.tipo === "Admin" && (
             <button
@@ -105,8 +96,7 @@ const Dashboard = () => {
       <Routes>
         {/* Dashboard principal agora mostra o site público com edição inline */}
         <Route path="/" element={<Home isEditMode={true} />} />
-  <Route path="/mensagens" element={<Messages />} />
-        <Route path="/conteudo" element={<ContentManagement />} />
+        <Route path="/mensagens" element={<Messages />} />
         <Route path="/projetos" element={<ProjectsManagement />} />
         <Route path="/perfil" element={<Profile />} />
         {user?.tipo === "Admin" && (

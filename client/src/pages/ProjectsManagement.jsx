@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../styles/ProjectsManagement.css";
 
 const ProjectsManagement = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingProject, setEditingProject] = useState(null);
@@ -140,6 +142,10 @@ const ProjectsManagement = () => {
 
   return (
     <div className="projects-management">
+      <button className="btn-back" onClick={() => navigate("/dashboard")}>
+        ← Voltar
+      </button>
+
       <div className="section-header">
         <div>
           <h2>Projetos</h2>
@@ -192,9 +198,11 @@ const ProjectsManagement = () => {
                       src={project.imagem_destaque}
                       alt={project.titulo}
                       onError={(e) => {
-                          // inline SVG placeholder to avoid external network calls
-                          e.target.src = `data:image/svg+xml;utf8,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect fill='#f6f7fb' width='100%' height='100%'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#888' font-size='18' font-family='Arial, sans-serif'>Sem Imagem</text></svg>")}`;
-                        }}
+                        // inline SVG placeholder to avoid external network calls
+                        e.target.src = `data:image/svg+xml;utf8,${encodeURIComponent(
+                          "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect fill='#f6f7fb' width='100%' height='100%'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#888' font-size='18' font-family='Arial, sans-serif'>Sem Imagem</text></svg>"
+                        )}`;
+                      }}
                     />
                   ) : (
                     <div className="placeholder-image">
