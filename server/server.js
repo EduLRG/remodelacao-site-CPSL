@@ -62,6 +62,11 @@ app.use(
         return callback(null, true);
       }
 
+      // Permitir todos os domínios .vercel.app
+      if (origin.endsWith(".vercel.app")) {
+        return callback(null, true);
+      }
+
       if (CLIENT_URLS.indexOf(origin) !== -1) {
         return callback(null, true);
       }
