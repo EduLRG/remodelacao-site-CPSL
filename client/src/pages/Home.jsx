@@ -264,6 +264,10 @@ const Home = ({ isEditMode = false }) => {
   const [loadingSecoes, setLoadingSecoes] = useState(true);
   const [editingSecaoPersonalizada, setEditingSecaoPersonalizada] =
     useState(null);
+  const lastFocusedRef = useRef(null);
+  const editModalRef = useRef(null);
+  const addModalRef = useRef(null);
+  const newsModalRef = useRef(null);
 
   // Upload cover image (imagem_destaque) and set editingData.imagem_destaque
   const uploadCoverImage = async (file) => {
@@ -451,6 +455,7 @@ const Home = ({ isEditMode = false }) => {
 
   // Abrir modal de edição
   const handleEdit = (section, data = {}, id = null) => {
+    lastFocusedRef.current = document.activeElement;
     setEditingSection(section);
     setEditingData(data);
     setEditingId(id);
@@ -462,6 +467,7 @@ const Home = ({ isEditMode = false }) => {
     section = "instituicao",
     secaoPersonalizadaData = null
   ) => {
+    lastFocusedRef.current = document.activeElement;
     console.log("handleAddSubsection - section:", section);
     setEditingSection(section);
 
@@ -544,7 +550,7 @@ const Home = ({ isEditMode = false }) => {
         }
       }
 
-      setShowAddModal(false);
+  closeAddModal();
       alert("Conteúdo adicionado com sucesso!");
     } catch (error) {
       console.error("Erro ao adicionar:", error);
@@ -578,6 +584,7 @@ const Home = ({ isEditMode = false }) => {
   };
 
   const openNews = async (noticia) => {
+    lastFocusedRef.current = document.activeElement;
     try {
       const resp = await api.get(`/noticias/${noticia.id}`);
       if (resp.data && resp.data.success) {
@@ -607,6 +614,53 @@ const Home = ({ isEditMode = false }) => {
     setShowNewsModal(true);
   };
 
+  const focusFirstElement = (ref) => {
+    if (!ref?.current) return;
+    const el = ref.current.querySelector(
+      'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
+    );
+    if (el) el.focus();
+  };
+
+  useEffect(() => {
+    if (showEditModal) {
+      setTimeout(() => focusFirstElement(editModalRef), 0);
+    }
+  }, [showEditModal]);
+
+  useEffect(() => {
+    if (showAddModal) {
+      setTimeout(() => focusFirstElement(addModalRef), 0);
+    }
+  }, [showAddModal]);
+
+  useEffect(() => {
+    if (showNewsModal) {
+      setTimeout(() => focusFirstElement(newsModalRef), 0);
+    }
+  }, [showNewsModal]);
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    if (lastFocusedRef.current) {
+      lastFocusedRef.current.focus();
+    }
+  };
+
+  const closeAddModal = () => {
+    setShowAddModal(false);
+    if (lastFocusedRef.current) {
+      lastFocusedRef.current.focus();
+    }
+  };
+
+  const closeNewsModal = () => {
+    setShowNewsModal(false);
+    if (lastFocusedRef.current) {
+      lastFocusedRef.current.focus();
+    }
+  };
+
   // Salvar edição
   const handleSave = async () => {
     try {
@@ -617,7 +671,7 @@ const Home = ({ isEditMode = false }) => {
             c.id === editingId ? { ...c, ...editingData } : c
           )
         );
-        setShowEditModal(false);
+        closeEditModal();
         alert("Conteúdo atualizado com sucesso!");
       } else if (editingSection === "respostas-sociais" && editingId) {
         await api.put(`/respostas-sociais/${editingId}`, editingData);
@@ -626,7 +680,7 @@ const Home = ({ isEditMode = false }) => {
             r.id === editingId ? { ...r, ...editingData } : r
           )
         );
-        setShowEditModal(false);
+        closeEditModal();
         alert("Resposta Social atualizada com sucesso!");
       } else if (editingSection === "noticias" && editingId) {
         await api.put(`/noticias/${editingId}`, editingData);
@@ -635,14 +689,14 @@ const Home = ({ isEditMode = false }) => {
             n.id === editingId ? { ...n, ...editingData } : n
           )
         );
-        setShowEditModal(false);
+        closeEditModal();
         alert("Notícia atualizada com sucesso!");
       } else if (editingSection === "hero") {
         alert("Funcionalidade de edição do Hero será implementada");
-        setShowEditModal(false);
+        closeEditModal();
       } else if (editingSection === "contactos") {
         alert("Funcionalidade de edição de Contactos será implementada");
-        setShowEditModal(false);
+        closeEditModal();
       }
     } catch (error) {
       console.error("Erro ao salvar:", error);
@@ -1294,9 +1348,13 @@ const Home = ({ isEditMode = false }) => {
       {showEditModal && (
         <div
           className="edit-modal-overlay"
-          onClick={() => setShowEditModal(false)}
+          onClick={closeEditModal}
         >
-          <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="edit-modal"
+            onClick={(e) => e.stopPropagation()}
+            ref={editModalRef}
+          >
             <div className="edit-modal-header">
               <h3>
                 Editar{" "}
@@ -1306,7 +1364,7 @@ const Home = ({ isEditMode = false }) => {
               </h3>
               <button
                 className="btn-close"
-                onClick={() => setShowEditModal(false)}
+                onClick={closeEditModal}
               >
                 ✕
               </button>
@@ -1600,7 +1658,7 @@ const Home = ({ isEditMode = false }) => {
             <div className="edit-modal-footer">
               <button
                 className="btn-cancel"
-                onClick={() => setShowEditModal(false)}
+                onClick={closeEditModal}
               >
                 Cancelar
               </button>
@@ -1616,14 +1674,18 @@ const Home = ({ isEditMode = false }) => {
       {showNewsModal && selectedNews && (
         <div
           className="edit-modal-overlay"
-          onClick={() => setShowNewsModal(false)}
+          onClick={closeNewsModal}
         >
-          <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="edit-modal"
+            onClick={(e) => e.stopPropagation()}
+            ref={newsModalRef}
+          >
             <div className="edit-modal-header">
               <h3>{selectedNews.titulo}</h3>
               <button
                 className="btn-close"
-                onClick={() => setShowNewsModal(false)}
+                onClick={closeNewsModal}
               >
                 ✕
               </button>
@@ -1810,9 +1872,13 @@ const Home = ({ isEditMode = false }) => {
       {showAddModal && (
         <div
           className="edit-modal-overlay"
-          onClick={() => setShowAddModal(false)}
+          onClick={closeAddModal}
         >
-          <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="edit-modal"
+            onClick={(e) => e.stopPropagation()}
+            ref={addModalRef}
+          >
             <div className="edit-modal-header">
               <h3>
                 Adicionar{" "}
@@ -1826,7 +1892,7 @@ const Home = ({ isEditMode = false }) => {
               </h3>
               <button
                 className="btn-close"
-                onClick={() => setShowAddModal(false)}
+                onClick={closeAddModal}
               >
                 ✕
               </button>
@@ -1953,7 +2019,7 @@ const Home = ({ isEditMode = false }) => {
                 <button
                   type="button"
                   className="btn-cancel"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={closeAddModal}
                 >
                   Cancelar
                 </button>

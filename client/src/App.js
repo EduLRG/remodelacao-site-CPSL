@@ -4,6 +4,8 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
+import AccessibilityBar from "./components/AccessibilityBar";
+import ScrollTopButton from "./components/ScrollTopButton";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -15,6 +17,8 @@ function App() {
     <Router>
       <AuthProvider>
         <AccessibilityProvider>
+          <AccessibilityBar />
+          <ScrollTopButton />
           <Routes>
             {/* 2. O Home irá renderizar as secções âncora */}
             <Route path="/" element={<Home />} />

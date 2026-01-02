@@ -121,8 +121,8 @@ function SectionItemsManagement() {
       setShowModal(false);
       fetchData();
     } catch (error) {
-      console.error("Erro ao salvar item:", error);
-      alert(error.response?.data?.message || "Erro ao salvar item.");
+      console.error("Erro ao guardar item:", error);
+      alert(error.response?.data?.message || "Erro ao guardar item.");
     }
   };
 

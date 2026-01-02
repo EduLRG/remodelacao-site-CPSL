@@ -1,0 +1,91 @@
+.accessibility-bar {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 12px;
+  z-index: 1200;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.accessibility-bar button {
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.accessibility-bar button:hover,
+.accessibility-bar button:focus {
+  background: rgba(255, 255, 255, 0.2);
+  outline: 2px solid #ff9966;
+  outline-offset: 2px;
+}
+
+.accessibility-bar button.active {
+  background: #ff9966;
+  color: #000;
+}
+
+.accessibility-state {
+  font-size: 12px;
+  color: #f0f0f0;
+  white-space: nowrap;
+}
+
+.accessibility-bar.compact {
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 10px;
+}
+
+.accessibility-bar.compact button {
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.accessibility-bar.compact .accessibility-state {
+  display: none;
+}
+
+.high-contrast .accessibility-bar {
+  background: #000 !important;
+  color: #fff !important;
+  border: 1px solid #fff;
+}
+
+.high-contrast .accessibility-bar button {
+  border-color: #fff;
+  background: #000;
+  color: #fff;
+}
+
+.high-contrast .accessibility-bar button.active {
+  background: #fff;
+  color: #000;
+}
+
+@media (max-width: 600px) {
+  .accessibility-bar {
+    left: 12px;
+    right: auto;
+    bottom: 12px;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+  }
+  .accessibility-state {
+    width: 100%;
+    text-align: center;
+  }
+}

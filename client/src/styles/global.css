@@ -36,14 +36,240 @@ body {
   font-size: 20px;
 }
 
-.high-contrast {
+/* Escala global de texto (inclui navbar e demais elementos) */
+.font-normal {
+  font-size: 16px;
+}
+.font-large {
+  font-size: 18px;
+}
+.font-xlarge {
+  font-size: 20px;
+}
+
+/* Escala progressiva: +2px no large, +4px no xlarge (navbar fica fixa) */
+body.font-large p,
+body.font-large li,
+body.font-large label,
+body.font-large span,
+body.font-large button,
+body.font-large input,
+body.font-large textarea,
+body.font-large select {
+  font-size: 18px;
+}
+
+body.font-large h1 { font-size: 50px; }
+body.font-large h2 { font-size: 38px; }
+body.font-large h3 { font-size: 30px; }
+body.font-large h4 { font-size: 22px; }
+body.font-large h5 { font-size: 20px; }
+body.font-large h6 { font-size: 18px; }
+
+body.font-large .hero-section h1 { font-size: 58px; }
+body.font-large .hero-section p { font-size: 26px; }
+body.font-large .hero-section .btn-primary { font-size: 18px; padding: 14px 36px; }
+
+body.font-xlarge p,
+body.font-xlarge li,
+body.font-xlarge label,
+body.font-xlarge span,
+body.font-xlarge button,
+body.font-xlarge input,
+body.font-xlarge textarea,
+body.font-xlarge select {
+  font-size: 20px;
+}
+
+body.font-xlarge h1 { font-size: 52px; }
+body.font-xlarge h2 { font-size: 40px; }
+body.font-xlarge h3 { font-size: 32px; }
+body.font-xlarge h4 { font-size: 24px; }
+body.font-xlarge h5 { font-size: 22px; }
+body.font-xlarge h6 { font-size: 20px; }
+
+body.font-xlarge .hero-section h1 { font-size: 60px; }
+body.font-xlarge .hero-section p { font-size: 28px; }
+body.font-xlarge .hero-section .btn-primary { font-size: 19px; padding: 15px 38px; }
+
+/* Fixar tamanhos da navbar/logo para não escalarem */
+.main-header h1 { font-size: 1.8rem; }
+.main-header span { font-size: 0.75rem; }
+.main-nav a, .header-logo a { font-size: 0.95rem; }
+
+/* Reforço: impedir scaling do logo/título no header quando fonte aumenta */
+body.font-large .main-header .header-logo h1,
+body.font-xlarge .main-header .header-logo h1 {
+  font-size: 1.8rem !important;
+}
+
+body.font-large .main-header .header-logo span,
+body.font-xlarge .main-header .header-logo span {
+  font-size: 0.75rem !important;
+}
+body.font-xlarge .fixed-navbar,
+body.font-xlarge .navbar-content,
+body.font-xlarge .navbar-content a,
+body.font-xlarge .nav-links a,
+body.font-xlarge .nav-links a *,
+body.font-xlarge .navbar-content * {
+  font-size: 16px !important;
+}
+
+.high-contrast,
+.high-contrast body {
   background: #000 !important;
   color: #fff !important;
 }
 
 .high-contrast a {
-  color: #ffff00 !important;
+  color: #fff !important;
   text-decoration: underline;
+}
+
+.high-contrast button,
+.high-contrast .btn-primary,
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea,
+.high-contrast .card,
+.high-contrast .section,
+.high-contrast .edit-modal,
+.high-contrast .edit-modal-header,
+.high-contrast .edit-modal-body,
+.high-contrast .edit-modal-footer,
+.high-contrast .navbar,
+.high-contrast .header,
+.high-contrast footer,
+.high-contrast .contact-form,
+.high-contrast .hero-section,
+.high-contrast .dashboard,
+.high-contrast .form-container,
+.high-contrast .login-card,
+.high-contrast .noticia-card,
+.high-contrast .resposta-card,
+.high-contrast .project-card,
+.high-contrast .card-body,
+.high-contrast .card-header,
+.high-contrast .card-footer {
+  background-color: #000 !important;
+  border-color: #fff !important;
+  color: #fff !important;
+}
+
+.high-contrast button,
+.high-contrast .btn-primary {
+  background: #000 !important;
+  border: 2px solid #fff !important;
+  color: #fff !important;
+}
+
+.high-contrast button:hover,
+.high-contrast .btn-primary:hover {
+  background: #111 !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+  background: #000 !important;
+  border: 1px solid #fff !important;
+}
+
+.high-contrast .section:nth-child(even) {
+  background: #000 !important;
+}
+
+.high-contrast .edit-modal-overlay {
+  background: rgba(0, 0, 0, 0.8) !important;
+}
+
+.high-contrast .fixed-navbar,
+.high-contrast .navbar-content,
+.high-contrast .nav-links a,
+.high-contrast .nav-links a:hover,
+.high-contrast header,
+.high-contrast .hero-section,
+.high-contrast .hero-section h1,
+.high-contrast .hero-section p,
+.high-contrast .btn-primary,
+.high-contrast .btn-edit-inline,
+.high-contrast .btn-edit-inline:hover,
+.high-contrast .btn-primary:hover,
+.high-contrast .section,
+.high-contrast .section h2,
+.high-contrast .section p {
+  background: #000 !important;
+  color: #fff !important;
+  border-color: #fff !important;
+}
+
+.high-contrast .nav-links a,
+.high-contrast .hero-section a {
+  color: #fff !important;
+  text-decoration: underline;
+}
+
+.high-contrast .hero-section {
+  box-shadow: none !important;
+}
+
+.high-contrast .project-item,
+.high-contrast .contact-info,
+.high-contrast .project-link-overlay,
+.high-contrast .project-placeholder,
+.high-contrast .project-link-overlay span,
+.high-contrast .section-intro,
+.high-contrast .project-info,
+.high-contrast .project-description,
+.high-contrast .project-date {
+  background: #000 !important;
+  color: #fff !important;
+  border-color: #fff !important;
+}
+
+.high-contrast .content-subsection,
+.high-contrast .subsection-header,
+.high-contrast .section-header-editable,
+.high-contrast .contact-form,
+.high-contrast .noticia-item,
+.high-contrast .btn-add-subsection,
+.high-contrast .btn-save,
+.high-contrast .btn-cancel,
+.high-contrast .btn-delete-inline {
+  background: #000 !important;
+  color: #fff !important;
+  border: 1px solid #666 !important;
+  box-shadow: none !important;
+}
+
+.high-contrast .section,
+.high-contrast .institutional-content,
+.high-contrast .projects-list,
+.high-contrast .gallery-grid,
+.high-contrast .contact-info,
+.high-contrast .project-item,
+.high-contrast .noticia-item,
+.high-contrast .content-subsection {
+  border: 1px solid #666 !important;
+}
+
+.high-contrast h1,
+.high-contrast h2,
+.high-contrast h3,
+.high-contrast h4,
+.high-contrast h5,
+.high-contrast h6,
+.high-contrast p,
+.high-contrast li,
+.high-contrast label,
+.high-contrast span,
+.high-contrast strong,
+.high-contrast input::placeholder,
+.high-contrast textarea::placeholder,
+.high-contrast select option {
+  color: #fff !important;
 }
 
 *:focus {
