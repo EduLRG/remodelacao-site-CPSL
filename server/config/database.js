@@ -9,9 +9,7 @@ const pool = new Pool({
   },
   max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000, // Aumentado para 10 segundos
-  // Forçar uso de IPv4
-  options: "-c client_encoding=UTF8",
+  connectionTimeoutMillis: 15000, // 15 segundos para melhor estabilidade
 });
 
 // Testar conexão
@@ -96,7 +94,9 @@ pool.query = async function (text, params) {
       convertedText.trim().toUpperCase().startsWith("INSERT") &&
       !convertedText.toUpperCase().includes("RETURNING")
     ) {
-      const insertQuery = convertedText.trim().replace(/;?\s*$/, " RETURNING *");
+      const insertQuery = convertedText
+        .trim()
+        .replace(/;?\s*$/, " RETURNING *");
       const insertResult = await originalQuery(insertQuery, convertedParams);
       const resultObj = {
         insertId: insertResult.rows[0]?.id || null,
