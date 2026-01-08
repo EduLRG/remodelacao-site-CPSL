@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../config/database");
 const { authenticate, isAdminOrGestor } = require("../middleware/auth");
-const upload = require("../middleware/upload");
+const { upload, useSupabase, uploadToSupabase } = require("../middleware/upload");
 
 // GET - Obter media por referência
 router.get("/", async (req, res) => {
@@ -48,19 +48,24 @@ router.post(
       let tipoMedia = tipo;
 
       if (req.file) {
-        const path = require("path");
-        const folder = path.basename(req.file.destination || "");
-        const filePath = req.file.path || req.file.secure_url || "";
-
-        // Se a storage é cloud (Cloudinary), path já é uma URL absoluta
-        if (filePath.startsWith("http")) {
-          mediaUrl = filePath;
-        } else {
-          mediaUrl = `/uploads/${folder ? folder + "/" : ""}${req.file.filename}`;
-        }
-
         mimeType = req.file.mimetype;
         tamanho = req.file.size ? (req.file.size / 1024).toFixed(2) + " KB" : null;
+
+        // Upload para Supabase Storage
+        if (useSupabase) {
+          const uploaded = await uploadToSupabase(req.file);
+          mediaUrl = uploaded?.url;
+        }
+        // Cloudinary já devolve secure_url em req.file.path
+        else if (req.file.path && req.file.path.startsWith("http")) {
+          mediaUrl = req.file.path;
+        }
+        // Disco local
+        else {
+          const path = require("path");
+          const folder = path.basename(req.file.destination || "");
+          mediaUrl = `/uploads/${folder ? folder + "/" : ""}${req.file.filename}`;
+        }
 
         if (req.file.mimetype.startsWith("image/")) tipoMedia = "imagem";
         else if (req.file.mimetype.startsWith("video/")) tipoMedia = "video";

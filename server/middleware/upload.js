@@ -3,17 +3,35 @@ const path = require("path");
 const fs = require("fs");
 const { v2: cloudinary } = require("cloudinary");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const { createClient } = require("@supabase/supabase-js");
+
+const useSupabase =
+  !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_BUCKET =
+  process.env.SUPABASE_STORAGE_BUCKET || "uploads";
+let supabase;
+
+if (useSupabase) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
 
 // Detectar se devemos usar Cloudinary (produção) ou disco (dev/self-hosted)
 const useCloudinary =
-  !!process.env.CLOUDINARY_URL ||
-  (process.env.CLOUDINARY_CLOUD_NAME &&
-    process.env.CLOUDINARY_API_KEY &&
-    process.env.CLOUDINARY_API_SECRET);
+  !useSupabase &&
+  (!!process.env.CLOUDINARY_URL ||
+    (process.env.CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET));
 
 let storage;
 
-if (useCloudinary) {
+if (useSupabase) {
+  // Guardar em memória para subir para Supabase Storage
+  storage = multer.memoryStorage();
+} else if (useCloudinary) {
   // Config via CLOUDINARY_URL (recomendado) ou pelos componentes individuais
   if (process.env.CLOUDINARY_URL) {
     cloudinary.config({ cloudinary_url: process.env.CLOUDINARY_URL });
@@ -113,4 +131,37 @@ const upload = multer({
   },
 });
 
-module.exports = upload;
+// Função auxiliar para enviar para Supabase Storage
+async function uploadToSupabase(file) {
+  if (!useSupabase || !supabase || !file || !file.buffer) return null;
+
+  const path = `${Date.now()}-${Math.round(Math.random() * 1e9)}${pathExt(
+    file.originalname
+  )}`;
+  const { data, error } = await supabase.storage
+    .from(SUPABASE_BUCKET)
+    .upload(path, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false,
+    });
+
+  if (error) {
+    throw new Error(`Supabase upload failed: ${error.message}`);
+  }
+
+  const { data: publicData } = supabase.storage
+    .from(SUPABASE_BUCKET)
+    .getPublicUrl(data.path);
+
+  return {
+    url: publicData?.publicUrl || null,
+    path: data.path,
+  };
+}
+
+function pathExt(filename) {
+  const ext = path.extname(filename || "");
+  return ext || "";
+}
+
+module.exports = { upload, useSupabase, uploadToSupabase };

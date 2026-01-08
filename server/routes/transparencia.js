@@ -2,7 +2,11 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../config/database");
 const { authenticate, isAdminOrGestor } = require("../middleware/auth");
-const upload = require("../middleware/upload");
+const {
+  upload,
+  useSupabase,
+  uploadToSupabase,
+} = require("../middleware/upload");
 
 // GET - Obter documentos de transparência
 router.get("/", async (req, res) => {
@@ -64,10 +68,19 @@ router.post(
           .json({ success: false, message: "Ficheiro é obrigatório." });
       }
 
+      const path = require("path");
       const filePath = req.file.path || req.file.secure_url || "";
-      const ficheiro_url = filePath.startsWith("http")
-        ? filePath
-        : `/uploads/${req.file.filename}`;
+
+      let ficheiro_url = null;
+      if (useSupabase) {
+        const uploaded = await uploadToSupabase(req.file);
+        ficheiro_url = uploaded?.url;
+      } else if (filePath.startsWith("http")) {
+        ficheiro_url = filePath;
+      } else {
+        const folder = path.basename(req.file.destination || "");
+        ficheiro_url = `/uploads/${folder ? folder + "/" : ""}${req.file.filename}`;
+      }
       const tamanho = req.file.size
         ? (req.file.size / 1024).toFixed(2) + " KB"
         : null;
@@ -140,12 +153,21 @@ router.put(
 
       const current = existingRows[0];
 
+      const path = require("path");
       const filePath = req.file?.path || req.file?.secure_url || "";
-      const ficheiro_url = req.file
-        ? filePath.startsWith("http")
-          ? filePath
-          : `/uploads/${req.file.filename}`
-        : current.ficheiro_url;
+      let ficheiro_url = current.ficheiro_url;
+
+      if (req.file) {
+        if (useSupabase) {
+          const uploaded = await uploadToSupabase(req.file);
+          ficheiro_url = uploaded?.url;
+        } else if (filePath.startsWith("http")) {
+          ficheiro_url = filePath;
+        } else {
+          const folder = path.basename(req.file.destination || "");
+          ficheiro_url = `/uploads/${folder ? folder + "/" : ""}${req.file.filename}`;
+        }
+      }
 
       const tamanho = req.file
         ? req.file.size
