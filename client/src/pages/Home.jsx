@@ -277,6 +277,8 @@ const Home = ({ isEditMode = false }) => {
   const [loadingSecoes, setLoadingSecoes] = useState(true);
   const [editingSecaoPersonalizada, setEditingSecaoPersonalizada] =
     useState(null);
+  const [selectedCustomItem, setSelectedCustomItem] = useState(null);
+  const [showCustomItemModal, setShowCustomItemModal] = useState(false);
   const lastFocusedRef = useRef(null);
   const editModalRef = useRef(null);
   const addModalRef = useRef(null);
@@ -747,6 +749,12 @@ const Home = ({ isEditMode = false }) => {
       setSelectedNews(noticia);
     }
     setShowNewsModal(true);
+  };
+
+  const openCustomItem = (item) => {
+    lastFocusedRef.current = document.activeElement;
+    setSelectedCustomItem(item);
+    setShowCustomItemModal(true);
   };
 
   const focusFirstElement = (ref) => {
@@ -1356,26 +1364,238 @@ const Home = ({ isEditMode = false }) => {
                 <p>A carregar...</p>
               ) : itens.length === 0 ? (
                 <p>Nenhum conteúdo adicionado ainda.</p>
+              ) : secao.tipo_layout === "texto" ? (
+                /* Layout TEXTO - Mostra tudo expandido (como Valores) */
+                <div className="text-layout-content">
+                  {itens.map((item) => (
+                    <div key={item.id} className="text-item-full">
+                      {isEditMode && user && (
+                        <div
+                          className="subsection-actions"
+                          style={{ float: "right" }}
+                        >
+                          <button
+                            className="btn-edit-inline"
+                            onClick={() =>
+                              handleEdit(
+                                "secao-personalizada",
+                                item,
+                                item.id,
+                                secao
+                              )
+                            }
+                            title="Editar"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="btn-delete-inline"
+                            onClick={() =>
+                              handleDelete(
+                                item.id,
+                                "secao-personalizada",
+                                secao.id
+                              )
+                            }
+                            title="Eliminar"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      )}
+                      {item.titulo && <h3>{item.titulo}</h3>}
+                      {item.imagem && (
+                        <img
+                          src={item.imagem}
+                          alt={item.titulo}
+                          style={{
+                            maxWidth: "100%",
+                            marginBottom: "1rem",
+                            borderRadius: "8px",
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = PLACEHOLDER_SVG;
+                          }}
+                        />
+                      )}
+                      {item.conteudo && (
+                        <div
+                          className="text-content-full"
+                          dangerouslySetInnerHTML={{ __html: item.conteudo }}
+                        />
+                      )}
+                      {item.video_url && (
+                        <video
+                          controls
+                          style={{ maxWidth: "100%", marginTop: "1rem" }}
+                        >
+                          <source src={item.video_url} type="video/mp4" />
+                        </video>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : secao.tipo_layout === "galeria" ? (
+                /* Layout GALERIA - Grid de imagens clicáveis */
+                <div className="gallery-grid">
+                  {itens.map((item) => (
+                    <div
+                      key={item.id}
+                      className="gallery-item"
+                      onClick={() => !isEditMode && openCustomItem(item)}
+                      style={{ cursor: !isEditMode ? "pointer" : "default" }}
+                      role="button"
+                      tabIndex={!isEditMode ? 0 : -1}
+                      onKeyDown={(e) =>
+                        !isEditMode && e.key === "Enter" && openCustomItem(item)
+                      }
+                    >
+                      {isEditMode && user && (
+                        <div className="subsection-actions">
+                          <button
+                            className="btn-edit-inline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(
+                                "secao-personalizada",
+                                item,
+                                item.id,
+                                secao
+                              );
+                            }}
+                            title="Editar"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="btn-delete-inline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(
+                                item.id,
+                                "secao-personalizada",
+                                secao.id
+                              );
+                            }}
+                            title="Eliminar"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      )}
+                      {item.imagem ? (
+                        <img
+                          src={item.imagem}
+                          alt={item.titulo || "Imagem"}
+                          className="gallery-image"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = PLACEHOLDER_SVG;
+                          }}
+                        />
+                      ) : (
+                        <div className="gallery-placeholder">
+                          {item.titulo || "Sem imagem"}
+                        </div>
+                      )}
+                      {item.titulo && (
+                        <div className="gallery-title">{item.titulo}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : secao.tipo_layout === "lista" ? (
+                /* Layout LISTA - Lista vertical clicável */
+                <div className="list-layout">
+                  {itens.map((item) => (
+                    <div
+                      key={item.id}
+                      className="list-item"
+                      onClick={() => !isEditMode && openCustomItem(item)}
+                      style={{ cursor: !isEditMode ? "pointer" : "default" }}
+                      role="button"
+                      tabIndex={!isEditMode ? 0 : -1}
+                      onKeyDown={(e) =>
+                        !isEditMode && e.key === "Enter" && openCustomItem(item)
+                      }
+                    >
+                      <div className="list-item-header">
+                        {item.titulo && <h3>{item.titulo}</h3>}
+                        {isEditMode && user && (
+                          <div className="subsection-actions">
+                            <button
+                              className="btn-edit-inline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(
+                                  "secao-personalizada",
+                                  item,
+                                  item.id,
+                                  secao
+                                );
+                              }}
+                              title="Editar"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              className="btn-delete-inline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(
+                                  item.id,
+                                  "secao-personalizada",
+                                  secao.id
+                                );
+                              }}
+                              title="Eliminar"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      {item.subtitulo && (
+                        <p className="list-item-description">
+                          {item.subtitulo}
+                        </p>
+                      )}
+                      {!isEditMode && (
+                        <span className="list-item-more">Ver mais →</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <div
-                  className={`institutional-content ${
-                    secao.tipo_layout === "galeria" ? "gallery-grid" : ""
-                  }`}
-                >
+                /* Layout CARDS (padrão) - Grid de cards clicáveis */
+                <div className="institutional-content">
                   {itens.map((item) => (
                     <div
                       key={item.id}
                       className="content-subsection"
-                      onClick={() =>
-                        !isEditMode && item.link_externo
-                          ? window.open(item.link_externo, "_blank")
-                          : null
-                      }
+                      onClick={() => {
+                        if (!isEditMode) {
+                          if (item.link_externo) {
+                            window.open(item.link_externo, "_blank");
+                          } else {
+                            openCustomItem(item);
+                          }
+                        }
+                      }}
                       style={{
-                        cursor:
-                          !isEditMode && item.link_externo
-                            ? "pointer"
-                            : "default",
+                        cursor: !isEditMode ? "pointer" : "default",
+                      }}
+                      role="button"
+                      tabIndex={!isEditMode ? 0 : -1}
+                      onKeyDown={(e) => {
+                        if (!isEditMode && e.key === "Enter") {
+                          if (item.link_externo) {
+                            window.open(item.link_externo, "_blank");
+                          } else {
+                            openCustomItem(item);
+                          }
+                        }
                       }}
                     >
                       <div className="subsection-header">
@@ -1442,19 +1662,10 @@ const Home = ({ isEditMode = false }) => {
                           className="content-preview"
                           dangerouslySetInnerHTML={{
                             __html:
-                              item.conteudo.substring(0, 200) +
-                              (item.conteudo.length > 200 ? "..." : ""),
+                              item.conteudo.substring(0, 150) +
+                              (item.conteudo.length > 150 ? "..." : ""),
                           }}
                         />
-                      )}
-                      {item.video_url && (
-                        <video
-                          controls
-                          className="content-video"
-                          style={{ marginTop: "1rem", maxWidth: "100%" }}
-                        >
-                          <source src={item.video_url} type="video/mp4" />
-                        </video>
                       )}
                     </div>
                   ))}
@@ -2232,6 +2443,111 @@ const Home = ({ isEditMode = false }) => {
                   ).toLocaleDateString("pt-PT")}
                 </small>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Item Personalizado */}
+      {showCustomItemModal && selectedCustomItem && (
+        <div
+          className="edit-modal-overlay"
+          onClick={() => {
+            setShowCustomItemModal(false);
+            if (lastFocusedRef.current) {
+              lastFocusedRef.current.focus();
+            }
+          }}
+        >
+          <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="edit-modal-header">
+              <h3>{selectedCustomItem.titulo || "Detalhes"}</h3>
+              <button
+                className="btn-close"
+                onClick={() => {
+                  setShowCustomItemModal(false);
+                  if (lastFocusedRef.current) {
+                    lastFocusedRef.current.focus();
+                  }
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="edit-modal-body">
+              {selectedCustomItem.imagem && (
+                <img
+                  src={selectedCustomItem.imagem}
+                  alt={selectedCustomItem.titulo}
+                  className="content-image"
+                  style={{
+                    width: "100%",
+                    marginBottom: "1rem",
+                    borderRadius: "8px",
+                  }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = PLACEHOLDER_SVG;
+                  }}
+                />
+              )}
+
+              {selectedCustomItem.titulo && (
+                <h3 style={{ marginTop: 12 }}>{selectedCustomItem.titulo}</h3>
+              )}
+
+              {selectedCustomItem.subtitulo && (
+                <p
+                  style={{
+                    fontStyle: "italic",
+                    color: "#666",
+                    marginTop: 8,
+                    marginBottom: 16,
+                  }}
+                >
+                  {selectedCustomItem.subtitulo}
+                </p>
+              )}
+
+              {selectedCustomItem.conteudo && (
+                <div
+                  className="custom-item-content"
+                  dangerouslySetInnerHTML={{
+                    __html: selectedCustomItem.conteudo || "",
+                  }}
+                />
+              )}
+
+              {selectedCustomItem.video_url && (
+                <video
+                  controls
+                  style={{
+                    width: "100%",
+                    marginTop: "1rem",
+                    borderRadius: "8px",
+                  }}
+                >
+                  <source src={selectedCustomItem.video_url} type="video/mp4" />
+                  Seu navegador não suporta o elemento de vídeo.
+                </video>
+              )}
+
+              {selectedCustomItem.link_externo && (
+                <div style={{ marginTop: "1rem" }}>
+                  <a
+                    href={selectedCustomItem.link_externo}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-primary"
+                    style={{
+                      display: "inline-block",
+                      padding: "0.75rem 1.5rem",
+                    }}
+                  >
+                    🔗 Visitar Link Externo
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
