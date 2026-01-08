@@ -1443,13 +1443,22 @@ const Home = ({ isEditMode = false }) => {
                     <div
                       key={item.id}
                       className="gallery-item"
-                      onClick={() => !isEditMode && openCustomItem(item)}
-                      style={{ cursor: !isEditMode ? "pointer" : "default" }}
+                      onClick={(e) => {
+                        // Não abrir se clicou num botão
+                        if (e.target.closest(".subsection-actions")) return;
+                        openCustomItem(item);
+                      }}
+                      style={{ cursor: "pointer" }}
                       role="button"
-                      tabIndex={!isEditMode ? 0 : -1}
-                      onKeyDown={(e) =>
-                        !isEditMode && e.key === "Enter" && openCustomItem(item)
-                      }
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (
+                          e.key === "Enter" &&
+                          !e.target.closest(".subsection-actions")
+                        ) {
+                          openCustomItem(item);
+                        }
+                      }}
                     >
                       {isEditMode && user && (
                         <div className="subsection-actions">
@@ -1512,13 +1521,22 @@ const Home = ({ isEditMode = false }) => {
                     <div
                       key={item.id}
                       className="list-item"
-                      onClick={() => !isEditMode && openCustomItem(item)}
-                      style={{ cursor: !isEditMode ? "pointer" : "default" }}
+                      onClick={(e) => {
+                        // Não abrir se clicou num botão
+                        if (e.target.closest(".subsection-actions")) return;
+                        openCustomItem(item);
+                      }}
+                      style={{ cursor: "pointer" }}
                       role="button"
-                      tabIndex={!isEditMode ? 0 : -1}
-                      onKeyDown={(e) =>
-                        !isEditMode && e.key === "Enter" && openCustomItem(item)
-                      }
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (
+                          e.key === "Enter" &&
+                          !e.target.closest(".subsection-actions")
+                        ) {
+                          openCustomItem(item);
+                        }
+                      }}
                     >
                       <div className="list-item-header">
                         {item.titulo && <h3>{item.titulo}</h3>}
@@ -1561,9 +1579,7 @@ const Home = ({ isEditMode = false }) => {
                           {item.subtitulo}
                         </p>
                       )}
-                      {!isEditMode && (
-                        <span className="list-item-more">Ver mais →</span>
-                      )}
+                      <span className="list-item-more">Ver mais →</span>
                     </div>
                   ))}
                 </div>
@@ -1574,22 +1590,25 @@ const Home = ({ isEditMode = false }) => {
                     <div
                       key={item.id}
                       className="content-subsection"
-                      onClick={() => {
-                        if (!isEditMode) {
-                          if (item.link_externo) {
-                            window.open(item.link_externo, "_blank");
-                          } else {
-                            openCustomItem(item);
-                          }
+                      onClick={(e) => {
+                        // Não abrir se clicou num botão
+                        if (e.target.closest(".subsection-actions")) return;
+                        if (item.link_externo) {
+                          window.open(item.link_externo, "_blank");
+                        } else {
+                          openCustomItem(item);
                         }
                       }}
                       style={{
-                        cursor: !isEditMode ? "pointer" : "default",
+                        cursor: "pointer",
                       }}
                       role="button"
-                      tabIndex={!isEditMode ? 0 : -1}
+                      tabIndex={0}
                       onKeyDown={(e) => {
-                        if (!isEditMode && e.key === "Enter") {
+                        if (
+                          e.key === "Enter" &&
+                          !e.target.closest(".subsection-actions")
+                        ) {
                           if (item.link_externo) {
                             window.open(item.link_externo, "_blank");
                           } else {
@@ -1671,6 +1690,143 @@ const Home = ({ isEditMode = false }) => {
                   ))}
                 </div>
               )}
+
+              {/* Formulário de contacto se a secção tiver tem_formulario ativado */}
+              {secao.tem_formulario && (
+                <div
+                  className="contact-form"
+                  style={{ marginTop: "3rem", position: "relative" }}
+                >
+                  {isEditMode && user && (
+                    <button
+                      className="btn-delete-inline"
+                      onClick={async () => {
+                        if (
+                          window.confirm(
+                            "Tem certeza que deseja remover o formulário desta secção?"
+                          )
+                        ) {
+                          try {
+                            await api.put(
+                              `/secoes-personalizadas/${secao.id}`,
+                              {
+                                ...secao,
+                                tem_formulario: false,
+                              }
+                            );
+                            // Atualizar estado local
+                            setSecoesPersonalizadas(
+                              secoesPersonalizadas.map((s) =>
+                                s.id === secao.id
+                                  ? { ...s, tem_formulario: false }
+                                  : s
+                              )
+                            );
+                            alert("Formulário removido com sucesso!");
+                          } catch (error) {
+                            console.error("Erro ao remover formulário:", error);
+                            alert("Erro ao remover formulário.");
+                          }
+                        }
+                      }}
+                      style={{
+                        position: "absolute",
+                        top: "10px",
+                        right: "10px",
+                        zIndex: 10,
+                      }}
+                      title="Remover formulário"
+                    >
+                      🗑️
+                    </button>
+                  )}
+                  <h3>Envie-nos uma mensagem</h3>
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const form = e.currentTarget;
+                      const data = {
+                        nome: form.nome.value,
+                        email: form.email.value,
+                        assunto: form.assunto.value,
+                        mensagem: form.mensagem.value,
+                        secao_personalizada_id: secao.id,
+                      };
+                      try {
+                        const resp = await api.post("/contactos/form", data);
+                        if (resp.data && resp.data.success) {
+                          alert("Mensagem enviada. Obrigado!");
+                          form.reset();
+                        } else {
+                          alert("Erro ao enviar mensagem.");
+                        }
+                      } catch (err) {
+                        console.error(err);
+                        alert("Erro ao enviar mensagem.");
+                      }
+                    }}
+                  >
+                    <div className="form-row">
+                      <div className="form-field name-field">
+                        <label htmlFor={`nome-${secao.id}`}>Nome</label>
+                        <div className="input-with-icon">
+                          <span className="input-icon">👤</span>
+                          <input
+                            id={`nome-${secao.id}`}
+                            name="nome"
+                            placeholder="Nome"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-field email-field">
+                        <label htmlFor={`email-${secao.id}`}>Email</label>
+                        <div className="input-with-icon">
+                          <span className="input-icon">✉️</span>
+                          <input
+                            id={`email-${secao.id}`}
+                            name="email"
+                            type="email"
+                            placeholder="Email"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-field subject-field">
+                      <label htmlFor={`assunto-${secao.id}`}>Assunto</label>
+                      <div className="input-with-icon">
+                        <span className="input-icon">📝</span>
+                        <input
+                          id={`assunto-${secao.id}`}
+                          name="assunto"
+                          placeholder="Assunto"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-field message-field">
+                      <label htmlFor={`mensagem-${secao.id}`}>Mensagem</label>
+                      <textarea
+                        id={`mensagem-${secao.id}`}
+                        name="mensagem"
+                        rows="6"
+                        placeholder="Mensagem"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-actions" style={{ marginTop: 10 }}>
+                      <button type="submit" className="btn-save">
+                        Enviar Mensagem
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           </section>
         );
@@ -1709,94 +1865,87 @@ const Home = ({ isEditMode = false }) => {
           </div>
 
           {/* Formulário de contacto público */}
-          {!isEditMode && (
-            <div className="contact-form">
-              <h3>Envie-nos uma mensagem</h3>
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const form = e.currentTarget;
-                  const data = {
-                    nome: form.nome.value,
-                    email: form.email.value,
-                    assunto: form.assunto.value,
-                    mensagem: form.mensagem.value,
-                  };
-                  try {
-                    const resp = await api.post("/contactos/form", data);
-                    if (resp.data && resp.data.success) {
-                      alert("Mensagem enviada. Obrigado!");
-                      form.reset();
-                    } else {
-                      alert("Erro ao enviar mensagem.");
-                    }
-                  } catch (err) {
-                    console.error(err);
+          <div className="contact-form">
+            <h3>Envie-nos uma mensagem</h3>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const data = {
+                  nome: form.nome.value,
+                  email: form.email.value,
+                  assunto: form.assunto.value,
+                  mensagem: form.mensagem.value,
+                };
+                try {
+                  const resp = await api.post("/contactos/form", data);
+                  if (resp.data && resp.data.success) {
+                    alert("Mensagem enviada. Obrigado!");
+                    form.reset();
+                  } else {
                     alert("Erro ao enviar mensagem.");
                   }
-                }}
-              >
-                <div className="form-row">
-                  <div className="form-field name-field">
-                    <label htmlFor="nome">Nome</label>
-                    <div className="input-with-icon">
-                      <span className="input-icon">👤</span>
-                      <input
-                        id="nome"
-                        name="nome"
-                        placeholder="Nome"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-field email-field">
-                    <label htmlFor="email">Email</label>
-                    <div className="input-with-icon">
-                      <span className="input-icon">✉️</span>
-                      <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        placeholder="Email"
-                        required
-                      />
-                    </div>
+                } catch (err) {
+                  console.error(err);
+                  alert("Erro ao enviar mensagem.");
+                }
+              }}
+            >
+              <div className="form-row">
+                <div className="form-field name-field">
+                  <label htmlFor="nome">Nome</label>
+                  <div className="input-with-icon">
+                    <span className="input-icon">👤</span>
+                    <input id="nome" name="nome" placeholder="Nome" required />
                   </div>
                 </div>
 
-                <div className="form-field subject-field">
-                  <label htmlFor="assunto">Assunto</label>
+                <div className="form-field email-field">
+                  <label htmlFor="email">Email</label>
                   <div className="input-with-icon">
-                    <span className="input-icon">📝</span>
+                    <span className="input-icon">✉️</span>
                     <input
-                      id="assunto"
-                      name="assunto"
-                      placeholder="Assunto"
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="Email"
                       required
                     />
                   </div>
                 </div>
+              </div>
 
-                <div className="form-field message-field">
-                  <label htmlFor="mensagem">Mensagem</label>
-                  <textarea
-                    id="mensagem"
-                    name="mensagem"
-                    rows="6"
-                    placeholder="Mensagem"
+              <div className="form-field subject-field">
+                <label htmlFor="assunto">Assunto</label>
+                <div className="input-with-icon">
+                  <span className="input-icon">📝</span>
+                  <input
+                    id="assunto"
+                    name="assunto"
+                    placeholder="Assunto"
                     required
                   />
                 </div>
+              </div>
 
-                <div className="form-actions" style={{ marginTop: 10 }}>
-                  <button type="submit" className="btn-save">
-                    Enviar Mensagem
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+              <div className="form-field message-field">
+                <label htmlFor="mensagem">Mensagem</label>
+                <textarea
+                  id="mensagem"
+                  name="mensagem"
+                  rows="6"
+                  placeholder="Mensagem"
+                  required
+                />
+              </div>
+
+              <div className="form-actions" style={{ marginTop: 10 }}>
+                <button type="submit" className="btn-save">
+                  Enviar Mensagem
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </section>
 
