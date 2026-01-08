@@ -361,11 +361,251 @@ function CustomSectionsManagement() {
                       setFormData({ ...formData, tipo_layout: e.target.value })
                     }
                   >
-                    <option value="cards">Cards (grade)</option>
-                    <option value="lista">Lista</option>
-                    <option value="galeria">Galeria de imagens</option>
-                    <option value="texto">Texto corrido</option>
+                    <option value="cards">
+                      📦 Cards - Grade de cartões clicáveis
+                    </option>
+                    <option value="lista">
+                      📋 Lista - Items verticais com "Ver mais"
+                    </option>
+                    <option value="galeria">
+                      🖼️ Galeria - Grid de imagens
+                    </option>
+                    <option value="texto">
+                      📄 Texto - Conteúdo expandido (estilo Valores)
+                    </option>
                   </select>
+
+                  {/* Preview do layout selecionado */}
+                  <div
+                    style={{
+                      marginTop: "16px",
+                      padding: "16px",
+                      background: "#f8f9fa",
+                      borderRadius: "8px",
+                      border: "2px solid #e0e0e0",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "0.9rem",
+                        marginBottom: "12px",
+                        color: "#555",
+                      }}
+                    >
+                      <strong>Preview do layout:</strong>
+                    </div>
+
+                    {/* Preview TEXTO */}
+                    {formData.tipo_layout === "texto" && (
+                      <div
+                        style={{
+                          background: "white",
+                          padding: "16px",
+                          borderRadius: "6px",
+                          border: "1px solid #ddd",
+                        }}
+                      >
+                        <div
+                          style={{
+                            color: "var(--primary-color)",
+                            fontWeight: "600",
+                            fontSize: "1rem",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          📄 Sobre Nós
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "0.85rem",
+                            lineHeight: "1.6",
+                            color: "#333",
+                          }}
+                        >
+                          Somos uma Instituição Particular de Solidariedade
+                          Social (IPSS) reconhecida pelo seu espírito inovador.
+                          Dedicando-nos ao apoio social à Pessoas Mais Velhas e
+                          à Infância...
+                          <div
+                            style={{
+                              marginTop: "8px",
+                              padding: "8px",
+                              background: "#f0f4f8",
+                              borderRadius: "4px",
+                              fontSize: "0.8rem",
+                            }}
+                          >
+                            ℹ️ Todo o conteúdo é exibido expandido. Ideal para
+                            textos informativos longos.
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Preview GALERIA */}
+                    {formData.tipo_layout === "galeria" && (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: "12px",
+                        }}
+                      >
+                        {[1, 2].map((i) => (
+                          <div
+                            key={i}
+                            style={{
+                              background: "#ffecd1",
+                              borderRadius: "8px",
+                              padding: "8px",
+                              border: "1px solid #ffb84d",
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                background: "#ffe0b3",
+                                height: "80px",
+                                borderRadius: "4px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "2rem",
+                              }}
+                            >
+                              🖼️
+                            </div>
+                            <div
+                              style={{
+                                textAlign: "center",
+                                marginTop: "6px",
+                                fontSize: "0.8rem",
+                                fontWeight: "500",
+                              }}
+                            >
+                              Creche {i}
+                            </div>
+                          </div>
+                        ))}
+                        <div
+                          style={{
+                            gridColumn: "1 / -1",
+                            padding: "8px",
+                            background: "#fff3e0",
+                            borderRadius: "4px",
+                            fontSize: "0.8rem",
+                            textAlign: "center",
+                          }}
+                        >
+                          🖱️ Clique nas imagens para ver detalhes no modal
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Preview LISTA */}
+                    {formData.tipo_layout === "lista" && (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            background: "white",
+                            padding: "12px 16px",
+                            borderRadius: "8px",
+                            border: "1px solid #ddd",
+                            borderLeft: "4px solid var(--primary-color)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontWeight: "600",
+                              color: "var(--primary-color)",
+                              marginBottom: "4px",
+                            }}
+                          >
+                            teste 1
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.85rem",
+                              color: "#777",
+                              marginTop: "4px",
+                            }}
+                          >
+                            Ver mais →
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            padding: "8px",
+                            background: "#e3f2fd",
+                            borderRadius: "4px",
+                            fontSize: "0.8rem",
+                            textAlign: "center",
+                          }}
+                        >
+                          🖱️ Clique em "Ver mais" para abrir modal com detalhes
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Preview CARDS */}
+                    {formData.tipo_layout === "cards" && (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr",
+                          gap: "8px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            background: "white",
+                            padding: "12px",
+                            borderRadius: "8px",
+                            border: "2px solid var(--primary-color)",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontWeight: "600",
+                              fontSize: "0.95rem",
+                              marginBottom: "6px",
+                            }}
+                          >
+                            teste 2
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.8rem",
+                              color: "#666",
+                              lineHeight: "1.4",
+                            }}
+                          >
+                            Cards grandeCards grandeCards grandeCards
+                            grandeCards grande...
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            padding: "8px",
+                            background: "#f3e5f5",
+                            borderRadius: "4px",
+                            fontSize: "0.8rem",
+                            textAlign: "center",
+                          }}
+                        >
+                          🖱️ Clique no card para ver detalhes ou abrir link
+                          externo
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </label>
 
                 <label
