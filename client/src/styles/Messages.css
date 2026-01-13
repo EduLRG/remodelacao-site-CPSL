@@ -115,15 +115,29 @@
   align-items: center;
 }
 .btn-small {
-  padding: 6px 8px;
+  padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid #ddd;
-  background: #f7f7f7;
+  border: 1px solid var(--primary-color);
+  background: var(--primary-color);
+  color: #000;
   cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
-.btn-delete {
-  background: #ffecec;
-  border-color: #ffb3b3;
+
+.btn-small:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn-small.btn-delete {
+  border-color: #ffc5c7;
+  color: #c0392b;
+  background: #fff5f5;
+}
+
+.btn-small.btn-delete:hover {
+  background: #ffd9dc;
 }
 .btn-refresh {
   background: var(--primary-color);

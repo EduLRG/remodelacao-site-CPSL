@@ -264,7 +264,6 @@
 /* Dashboard Content */
 .dashboard-content {
   padding: 2rem;
-  background: #f8fafc;
   min-height: calc(100vh - 60px);
 }
 
