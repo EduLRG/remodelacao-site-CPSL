@@ -1124,7 +1124,6 @@ const Home = ({ isEditMode = false }) => {
       <section id="projetos" className="section">
         <div className="container">
           <h2>Projetos</h2>
-          <p className="section-intro">Conheça os nossos projetos em curso.</p>
 
           {loadingProjects ? (
             <div className="loading-projects">A carregar projetos...</div>
