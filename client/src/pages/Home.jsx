@@ -1833,9 +1833,7 @@ const Home = ({ isEditMode = false }) => {
                         <div
                           className="content-preview"
                           dangerouslySetInnerHTML={{
-                            __html:
-                              item.conteudo.substring(0, 150) +
-                              (item.conteudo.length > 150 ? "..." : ""),
+                            __html: item.conteudo,
                           }}
                         />
                       )}
@@ -5037,6 +5035,45 @@ const Home = ({ isEditMode = false }) => {
                       />
                     </label>
                   )}
+
+                {/* URL de Vídeo - apenas para seções personalizadas */}
+                {editingSecaoPersonalizada && (
+                  <label>
+                    <strong>URL de Vídeo (opcional):</strong>
+                    <input
+                      type="url"
+                      value={editingData.video_url || ""}
+                      onChange={(e) =>
+                        setEditingData({
+                          ...editingData,
+                          video_url: e.target.value,
+                        })
+                      }
+                      placeholder="https://..."
+                    />
+                  </label>
+                )}
+
+                {/* Link Externo - apenas para seções personalizadas */}
+                {editingSecaoPersonalizada && (
+                  <label>
+                    <strong>Link Externo (opcional):</strong>
+                    <input
+                      type="url"
+                      value={editingData.link_externo || ""}
+                      onChange={(e) =>
+                        setEditingData({
+                          ...editingData,
+                          link_externo: e.target.value,
+                        })
+                      }
+                      placeholder="https://..."
+                    />
+                    <small className="hint">
+                      Se preenchido, o item será um link clicável
+                    </small>
+                  </label>
+                )}
 
                 {/* Conteúdo com Rich Text Editor - para todas as seções */}
                 {editingSection !== "contactos" &&
