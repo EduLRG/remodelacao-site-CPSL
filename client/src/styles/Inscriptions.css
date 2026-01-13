@@ -204,11 +204,19 @@
 }
 
 .btn-small {
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid #d0d7e2;
-  background: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--primary-color);
+  background: var(--primary-color);
+  color: #000;
   cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-small:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 
 .btn-small.btn-delete {

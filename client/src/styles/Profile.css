@@ -20,7 +20,7 @@
 }
 
 .profile-info h1 {
-  color: #1e293b;
+  color: var(--primary-color);
   margin-bottom: 2rem;
   font-size: 1.875rem;
   font-weight: 700;
