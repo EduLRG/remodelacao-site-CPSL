@@ -12,6 +12,9 @@ function CustomSectionsManagement() {
   const [showModal, setShowModal] = useState(false);
   const [editingSecao, setEditingSecao] = useState(null);
   const [draggedItem, setDraggedItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterLayout, setFilterLayout] = useState("todos");
+  const [filterForm, setFilterForm] = useState("todos");
   const FORM_TYPES = [
     { id: "contacto", label: "Formulário de contacto" },
     { id: "erpi", label: "Inscrição ERPI" },
@@ -140,7 +143,10 @@ function CustomSectionsManagement() {
         .filter((opt) => opt?.tipo)
         .map((opt, idx) => ({
           tipo: opt.tipo,
-          label: opt.label?.trim() || labelForFormType(opt.tipo) || `Opção ${idx + 1}`,
+          label:
+            opt.label?.trim() ||
+            labelForFormType(opt.tipo) ||
+            `Opção ${idx + 1}`,
         }));
 
       if (opcoesLimpa.length === 0) {
@@ -278,6 +284,23 @@ function CustomSectionsManagement() {
     }));
   };
 
+  // Filtrar secções
+  const filteredSecoes = secoes.filter((secao) => {
+    const matchesSearch =
+      secao.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      secao.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      secao.slug?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesLayout =
+      filterLayout === "todos" || secao.tipo_layout === filterLayout;
+    const cfg = parseFormConfig(secao.config_formulario);
+    const hasForm = cfg?.tipo || secao.tem_formulario;
+    const matchesForm =
+      filterForm === "todos" ||
+      (filterForm === "com" && hasForm) ||
+      (filterForm === "sem" && !hasForm);
+    return matchesSearch && matchesLayout && matchesForm;
+  });
+
   if (loading) {
     return (
       <div className="dashboard-content">
@@ -289,23 +312,64 @@ function CustomSectionsManagement() {
   return (
     <div className="dashboard-content">
       <div className="dashboard-header">
-        <h1>Gerir Seções Personalizadas</h1>
+        <h1>Gerir Secções Personalizadas ({filteredSecoes.length})</h1>
         <div className="dashboard-actions">
           <button className="btn-back" onClick={() => navigate("/dashboard")}>
             ← Voltar
           </button>
           <button className="btn-primary" onClick={() => handleOpenModal()}>
-            ➕ Nova Seção
+            ➕ Nova Secção
           </button>
         </div>
       </div>
 
-      {secoes.length === 0 ? (
+      {/* Filtros */}
+      <div className="filters-bar">
+        <div className="search-box">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Pesquisar por título, nome ou slug..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="filters-group">
+          <select
+            value={filterLayout}
+            onChange={(e) => setFilterLayout(e.target.value)}
+          >
+            <option value="todos">Todos os layouts</option>
+            <option value="cards">Cards</option>
+            <option value="galeria">Galeria</option>
+            <option value="lista">Lista</option>
+            <option value="texto">Texto</option>
+          </select>
+          <select
+            value={filterForm}
+            onChange={(e) => setFilterForm(e.target.value)}
+          >
+            <option value="todos">Todos os formulários</option>
+            <option value="com">Com formulário</option>
+            <option value="sem">Sem formulário</option>
+          </select>
+        </div>
+      </div>
+
+      {filteredSecoes.length === 0 ? (
         <div className="empty-state">
-          <p>Nenhuma seção personalizada criada ainda.</p>
-          <button className="btn-primary" onClick={() => handleOpenModal()}>
-            Criar primeira seção
-          </button>
+          <p>
+            {searchTerm || filterLayout !== "todos" || filterForm !== "todos"
+              ? "Nenhuma secção encontrada."
+              : "Nenhuma secção personalizada criada ainda."}
+          </p>
+          {!searchTerm &&
+            filterLayout === "todos" &&
+            filterForm === "todos" && (
+              <button className="btn-primary" onClick={() => handleOpenModal()}>
+                Criar primeira secção
+              </button>
+            )}
         </div>
       ) : (
         <div className="table-container">
@@ -321,7 +385,7 @@ function CustomSectionsManagement() {
               </tr>
             </thead>
             <tbody>
-              {secoes.map((secao) => (
+              {filteredSecoes.map((secao) => (
                 <tr
                   key={secao.id}
                   draggable
@@ -355,14 +419,20 @@ function CustomSectionsManagement() {
                   <td>
                     {(() => {
                       const cfg = parseFormConfig(secao.config_formulario);
-                      const formType = cfg?.tipo || (secao.tem_formulario ? "contacto" : "nenhum");
+                      const formType =
+                        cfg?.tipo ||
+                        (secao.tem_formulario ? "contacto" : "nenhum");
 
                       if (!formType || formType === "nenhum") {
-                        return <span className="badge badge-secondary">Não</span>;
+                        return (
+                          <span className="badge badge-secondary">Não</span>
+                        );
                       }
 
                       if (formType === "multiple") {
-                        const total = Array.isArray(cfg?.opcoes) ? cfg.opcoes.length : 0;
+                        const total = Array.isArray(cfg?.opcoes)
+                          ? cfg.opcoes.length
+                          : 0;
                         return (
                           <span className="badge badge-success">
                             Múltiplos {total ? `(${total})` : ""}
@@ -371,7 +441,9 @@ function CustomSectionsManagement() {
                       }
 
                       const label = cfg?.label || labelForFormType(formType);
-                      return <span className="badge badge-success">{label}</span>;
+                      return (
+                        <span className="badge badge-success">{label}</span>
+                      );
                     })()}
                   </td>
                   <td>
@@ -777,15 +849,17 @@ function CustomSectionsManagement() {
                     <option value="nenhum">Nenhum</option>
                     <option value="contacto">Formulário de contacto</option>
                     <option value="erpi">Formulário ERPI</option>
-                    <option value="centro_de_dia">Formulário Centro de Dia</option>
+                    <option value="centro_de_dia">
+                      Formulário Centro de Dia
+                    </option>
                     <option value="sad">Formulário SAD</option>
                     <option value="creche">Formulário Creche</option>
                     <option value="multiple">Vários formulários</option>
                   </select>
                   <small className="hint">
                     Escolha um ou vários formulários. Em "Vários formulários"
-                    pode definir rótulos diferentes (ex: ERPI, CD, SAD,
-                    Creche) e reutilizar o mesmo tipo de formulário.
+                    pode definir rótulos diferentes (ex: ERPI, CD, SAD, Creche)
+                    e reutilizar o mesmo tipo de formulário.
                   </small>
                 </label>
 
@@ -842,7 +916,11 @@ function CustomSectionsManagement() {
                           <select
                             value={opt.tipo}
                             onChange={(e) =>
-                              handleUpdateFormOption(opt.id, "tipo", e.target.value)
+                              handleUpdateFormOption(
+                                opt.id,
+                                "tipo",
+                                e.target.value
+                              )
                             }
                           >
                             {FORM_TYPES.map((ft) => (
@@ -855,7 +933,11 @@ function CustomSectionsManagement() {
                             type="text"
                             value={opt.label}
                             onChange={(e) =>
-                              handleUpdateFormOption(opt.id, "label", e.target.value)
+                              handleUpdateFormOption(
+                                opt.id,
+                                "label",
+                                e.target.value
+                              )
                             }
                             placeholder="Rótulo visível para o utilizador"
                           />

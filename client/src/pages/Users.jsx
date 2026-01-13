@@ -16,6 +16,10 @@ const Users = () => {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("todos");
+  const [filterStatus, setFilterStatus] = useState("todos");
+  const [sortOrder, setSortOrder] = useState("recentes");
 
   // Carregar utilizadores
   const fetchUsers = async () => {
@@ -103,6 +107,30 @@ const Users = () => {
     }
   };
 
+  // Filtrar e ordenar utilizadores
+  const filteredUsers = users
+    .filter((user) => {
+      const matchesSearch =
+        user.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = filterType === "todos" || user.tipo === filterType;
+      const matchesStatus =
+        filterStatus === "todos" ||
+        (filterStatus === "ativos" && user.ativo) ||
+        (filterStatus === "inativos" && !user.ativo);
+      return matchesSearch && matchesType && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (sortOrder === "recentes") {
+        return new Date(b.data_criacao) - new Date(a.data_criacao);
+      } else if (sortOrder === "antigos") {
+        return new Date(a.data_criacao) - new Date(b.data_criacao);
+      } else if (sortOrder === "nome") {
+        return (a.nome || "").localeCompare(b.nome || "");
+      }
+      return 0;
+    });
+
   // Eliminar utilizador
   const deleteUser = async (userId) => {
     if (!window.confirm("Tem certeza que deseja eliminar este utilizador?")) {
@@ -133,7 +161,7 @@ const Users = () => {
       </button>
 
       <div className="users-header">
-        <h2>Gestão de Utilizadores</h2>
+        <h2>Gestão de Utilizadores ({filteredUsers.length})</h2>
         <button className="btn-primary" onClick={() => setShowModal(true)}>
           + Novo Utilizador
         </button>
@@ -141,6 +169,45 @@ const Users = () => {
 
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
+
+      {/* Filtros */}
+      <div className="filters-bar">
+        <div className="search-box">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Pesquisar por nome ou email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="filters-group">
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+          >
+            <option value="todos">Todos os tipos</option>
+            <option value="Admin">Admin</option>
+            <option value="Gestor">Gestor</option>
+          </select>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="todos">Todos os estados</option>
+            <option value="ativos">Ativos</option>
+            <option value="inativos">Inativos</option>
+          </select>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+          >
+            <option value="recentes">Mais recentes</option>
+            <option value="antigos">Mais antigos</option>
+            <option value="nome">Nome A-Z</option>
+          </select>
+        </div>
+      </div>
 
       {loading ? (
         <div className="loading">A carregar...</div>
@@ -159,7 +226,7 @@ const Users = () => {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <tr key={user.id}>
                   <td>{user.nome}</td>
                   <td>{user.email}</td>
@@ -202,7 +269,7 @@ const Users = () => {
             </tbody>
           </table>
 
-          {users.length === 0 && (
+          {filteredUsers.length === 0 && (
             <div className="no-data">Nenhum utilizador encontrado.</div>
           )}
         </div>

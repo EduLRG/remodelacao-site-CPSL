@@ -20,6 +20,9 @@ const ProjectsManagement = () => {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("todos");
+  const [sortOrder, setSortOrder] = useState("recentes");
 
   useEffect(() => {
     fetchProjects();
@@ -136,6 +139,35 @@ const ProjectsManagement = () => {
     setShowModal(true);
   };
 
+  // Filtrar e ordenar projetos
+  const filteredProjects = projects
+    .filter((project) => {
+      const matchesSearch =
+        project.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        filterStatus === "todos" ||
+        (filterStatus === "ativos" && project.ativo) ||
+        (filterStatus === "inativos" && !project.ativo);
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (sortOrder === "recentes") {
+        return (
+          new Date(b.data_criacao || b.created_at || 0) -
+          new Date(a.data_criacao || a.created_at || 0)
+        );
+      } else if (sortOrder === "antigos") {
+        return (
+          new Date(a.data_criacao || a.created_at || 0) -
+          new Date(b.data_criacao || b.created_at || 0)
+        );
+      } else if (sortOrder === "titulo") {
+        return (a.titulo || "").localeCompare(b.titulo || "");
+      }
+      return 0;
+    });
+
   if (loading) {
     return <div className="loading">A carregar projetos...</div>;
   }
@@ -148,7 +180,7 @@ const ProjectsManagement = () => {
 
       <div className="section-header">
         <div>
-          <h2>Projetos</h2>
+          <h2>Projetos ({filteredProjects.length})</h2>
           <p className="section-description">
             Gerencie os projetos que aparecem na seção "Projetos" do site
           </p>
@@ -161,6 +193,37 @@ const ProjectsManagement = () => {
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
+      {/* Filtros */}
+      <div className="filters-bar">
+        <div className="search-box">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Pesquisar por título ou descrição..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="filters-group">
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="todos">Todos os estados</option>
+            <option value="ativos">Ativos</option>
+            <option value="inativos">Inativos</option>
+          </select>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+          >
+            <option value="recentes">Mais recentes</option>
+            <option value="antigos">Mais antigos</option>
+            <option value="titulo">Título A-Z</option>
+          </select>
+        </div>
+      </div>
+
       <div className="projects-preview">
         <div className="preview-header">
           <h3>📋 Pré-visualização da Seção</h3>
@@ -168,15 +231,21 @@ const ProjectsManagement = () => {
         </div>
 
         <div className="projects-grid">
-          {projects.length === 0 ? (
+          {filteredProjects.length === 0 ? (
             <div className="no-projects">
-              <p>Nenhum projeto criado ainda.</p>
-              <button className="btn-primary" onClick={handleNewProject}>
-                Criar Primeiro Projeto
-              </button>
+              <p>
+                {searchTerm || filterStatus !== "todos"
+                  ? "Nenhum projeto encontrado."
+                  : "Nenhum projeto criado ainda."}
+              </p>
+              {!searchTerm && filterStatus === "todos" && (
+                <button className="btn-primary" onClick={handleNewProject}>
+                  Criar Primeiro Projeto
+                </button>
+              )}
             </div>
           ) : (
-            projects.map((project) => (
+            filteredProjects.map((project) => (
               <div
                 key={project.id}
                 className={`project-card ${!project.ativo ? "inactive" : ""} ${

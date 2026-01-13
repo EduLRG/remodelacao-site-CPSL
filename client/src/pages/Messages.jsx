@@ -10,6 +10,9 @@ const Messages = () => {
   const [mensagens, setMensagens] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("todas");
+  const [sortOrder, setSortOrder] = useState("recentes");
 
   const fetchMensagens = async () => {
     try {
@@ -118,6 +121,31 @@ const Messages = () => {
 
   const unreadCount = mensagens.filter((m) => !m.respondido).length;
 
+  // Filtrar e ordenar mensagens
+  const filteredMensagens = mensagens
+    .filter((m) => {
+      const matchesSearch =
+        m.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.assunto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.mensagem?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        filterStatus === "todas" ||
+        (filterStatus === "novas" && !m.respondido) ||
+        (filterStatus === "lidas" && m.respondido);
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.data_submissao || a.created_at || 0);
+      const dateB = new Date(b.data_submissao || b.created_at || 0);
+      if (sortOrder === "recentes") {
+        return dateB - dateA;
+      } else if (sortOrder === "antigas") {
+        return dateA - dateB;
+      }
+      return 0;
+    });
+
   // notify other parts of the app (e.g., dashboard) about unread count changes
   useEffect(() => {
     try {
@@ -137,20 +165,57 @@ const Messages = () => {
       </button>
 
       <div className="messages-header">
-        <h2>Mensagens ({unreadCount} novas)</h2>
+        <h2>
+          Mensagens ({filteredMensagens.length})
+          {unreadCount > 0 && ` - ${unreadCount} novas`}
+        </h2>
         <button onClick={fetchMensagens} className="btn-refresh">
           🔄 Atualizar
         </button>
       </div>
 
+      {/* Filtros */}
+      <div className="filters-bar">
+        <div className="search-box">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Pesquisar por nome, email, assunto ou mensagem..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="filters-group">
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="todas">Todas as mensagens</option>
+            <option value="novas">Não lidas</option>
+            <option value="lidas">Lidas</option>
+          </select>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+          >
+            <option value="recentes">Mais recentes</option>
+            <option value="antigas">Mais antigas</option>
+          </select>
+        </div>
+      </div>
+
       {loading ? (
         <p>A carregar mensagens...</p>
-      ) : mensagens.length === 0 ? (
-        <p>Sem mensagens.</p>
+      ) : filteredMensagens.length === 0 ? (
+        <p>
+          {searchTerm || filterStatus !== "todas"
+            ? "Nenhuma mensagem encontrada."
+            : "Sem mensagens."}
+        </p>
       ) : (
         <div className="messages-list">
           <ul>
-            {mensagens.map((m) => (
+            {filteredMensagens.map((m) => (
               <li
                 key={m.id}
                 className={`message-item ${m.respondido ? "read" : "unread"}`}

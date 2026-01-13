@@ -20,9 +20,17 @@ const FORM_LABELS = {
 const Inscriptions = () => {
   const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState("erpi");
-  const [itemsByType, setItemsByType] = useState({ erpi: [], centro_de_dia: [], sad: [], creche: [] });
+  const [itemsByType, setItemsByType] = useState({
+    erpi: [],
+    centro_de_dia: [],
+    sad: [],
+    creche: [],
+  });
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("todas");
+  const [sortOrder, setSortOrder] = useState("recentes");
 
   const dispatchUnread = (list) => {
     const unread = list.filter((it) => !it.lido).length;
@@ -52,28 +60,31 @@ const Inscriptions = () => {
     }
   }, []);
 
-  const fetchItems = useCallback(async (type = selectedType) => {
-    try {
-      setLoading(true);
-      const endpoint = FORM_ENDPOINTS[type];
-      const resp = await api.get(endpoint);
-      if (resp.data?.success) {
-        const data = resp.data.data || [];
-        const sorted = data.sort(
-          (a, b) =>
-            new Date(b.criado_em || b.created_at || 0) -
-            new Date(a.criado_em || a.created_at || 0)
-        );
-        setItemsByType((prev) => ({ ...prev, [type]: sorted }));
-        dispatchUnread(sorted);
+  const fetchItems = useCallback(
+    async (type = selectedType) => {
+      try {
+        setLoading(true);
+        const endpoint = FORM_ENDPOINTS[type];
+        const resp = await api.get(endpoint);
+        if (resp.data?.success) {
+          const data = resp.data.data || [];
+          const sorted = data.sort(
+            (a, b) =>
+              new Date(b.criado_em || b.created_at || 0) -
+              new Date(a.criado_em || a.created_at || 0)
+          );
+          setItemsByType((prev) => ({ ...prev, [type]: sorted }));
+          dispatchUnread(sorted);
+        }
+        await fetchUnreadTotals();
+      } catch (error) {
+        console.error("Erro ao carregar inscrições:", error);
+      } finally {
+        setLoading(false);
       }
-      await fetchUnreadTotals();
-    } catch (error) {
-      console.error("Erro ao carregar inscrições:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchUnreadTotals, selectedType]);
+    },
+    [fetchUnreadTotals, selectedType]
+  );
 
   useEffect(() => {
     fetchItems(selectedType);
@@ -134,50 +145,118 @@ const Inscriptions = () => {
   };
 
   const items = itemsByType[selectedType] || [];
+
+  // Filtrar e ordenar inscrições
+  const filteredItems = items
+    .filter((it) => {
+      const matchesSearch =
+        it.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        it.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        it.contacto_nome_completo
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        filterStatus === "todas" ||
+        (filterStatus === "novas" && !it.lido) ||
+        (filterStatus === "lidas" && it.lido);
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.criado_em || a.created_at || 0);
+      const dateB = new Date(b.criado_em || b.created_at || 0);
+      if (sortOrder === "recentes") {
+        return dateB - dateA;
+      } else if (sortOrder === "antigas") {
+        return dateA - dateB;
+      }
+      return 0;
+    });
+
   const unreadCount = items.filter((it) => !it.lido).length;
 
   return (
     <div className="inscriptions-page">
-      <button className="btn-back" onClick={() => navigate("/dashboard")}>← Voltar</button>
+      <button className="btn-back" onClick={() => navigate("/dashboard")}>
+        ← Voltar
+      </button>
 
       <div className="inscriptions-header">
         <h2>
-          Inscrições {FORM_LABELS[selectedType]} ({items.length})
+          Inscrições {FORM_LABELS[selectedType]} ({filteredItems.length})
           {unreadCount > 0 && (
             <span className="badge-dot" title="Novas inscrições" />
           )}
         </h2>
         <div className="inscriptions-actions">
-          <div className="inscriptions-options">
-            {Object.keys(FORM_ENDPOINTS).map((type) => (
-              <label
-                key={type}
-                className={`form-option-card ${selectedType === type ? "selected" : ""}`}
-              >
-                <input
-                  type="radio"
-                  name="insc-type"
-                  value={type}
-                  checked={selectedType === type}
-                  onChange={() => {
-                    setSelected(null);
-                    setSelectedType(type);
-                  }}
-                />
-                {FORM_LABELS[type]}
-              </label>
-            ))}
-          </div>
-          <button onClick={fetchItems} className="btn-refresh">
+          <button
+            onClick={() => fetchItems(selectedType)}
+            className="btn-refresh"
+          >
             🔄 Atualizar
           </button>
         </div>
       </div>
 
+      {/* Filtros de Tipo */}
+      <div className="type-tabs">
+        {Object.keys(FORM_ENDPOINTS).map((type) => (
+          <button
+            key={type}
+            className={`type-tab ${selectedType === type ? "active" : ""}`}
+            onClick={() => {
+              setSelectedType(type);
+              setSearchTerm("");
+              setFilterStatus("todas");
+            }}
+          >
+            {FORM_LABELS[type]}
+            {(itemsByType[type] || []).filter((it) => !it.lido).length > 0 && (
+              <span className="tab-badge">
+                {(itemsByType[type] || []).filter((it) => !it.lido).length}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Filtros */}
+      <div className="filters-bar">
+        <div className="search-box">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Pesquisar por nome ou email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="filters-group">
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="todas">Todas as inscrições</option>
+            <option value="novas">Não lidas</option>
+            <option value="lidas">Lidas</option>
+          </select>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+          >
+            <option value="recentes">Mais recentes</option>
+            <option value="antigas">Mais antigas</option>
+          </select>
+        </div>
+      </div>
+
       {loading ? (
-        <p>A carregar inscrições...</p>
-      ) : items.length === 0 ? (
-        <p>Sem inscrições submetidas.</p>
+        <p>A carregar...</p>
+      ) : filteredItems.length === 0 ? (
+        <p>
+          {searchTerm || filterStatus !== "todas"
+            ? "Nenhuma inscrição encontrada."
+            : "Sem inscrições."}
+        </p>
       ) : (
         <div className="inscriptions-table-wrapper">
           <table className="inscriptions-table">
@@ -205,7 +284,7 @@ const Inscriptions = () => {
               )}
             </thead>
             <tbody>
-              {items.map((it) => (
+              {filteredItems.map((it) => (
                 <tr key={it.id} className={it.lido ? "" : "unread"}>
                   <td>{it.nome_completo}</td>
                   {selectedType === "creche" ? (
@@ -214,7 +293,11 @@ const Inscriptions = () => {
                       <td>{it.nif || ""}</td>
                       <td>{it.localidade || ""}</td>
                       <td>
-                        {it.mae_telemovel || it.pai_telemovel || it.mae_email || it.pai_email || ""}
+                        {it.mae_telemovel ||
+                          it.pai_telemovel ||
+                          it.mae_email ||
+                          it.pai_email ||
+                          ""}
                       </td>
                     </>
                   ) : (
@@ -260,89 +343,210 @@ const Inscriptions = () => {
             <h3>{selected.nome_completo}</h3>
             {selectedType === "creche" ? (
               <>
-                <p><strong>Creche:</strong> {selected.creche_opcao || "(não indicado)"}</p>
-                <p><strong>Criança já nasceu?</strong> {selected.crianca_nasceu ? "Sim" : "Não"}</p>
+                <p>
+                  <strong>Creche:</strong>{" "}
+                  {selected.creche_opcao || "(não indicado)"}
+                </p>
+                <p>
+                  <strong>Criança já nasceu?</strong>{" "}
+                  {selected.crianca_nasceu ? "Sim" : "Não"}
+                </p>
                 {selected.crianca_nasceu ? (
-                  <p><strong>Data de nascimento:</strong> {formatDateOnly(selected.data_nascimento)}</p>
+                  <p>
+                    <strong>Data de nascimento:</strong>{" "}
+                    {formatDateOnly(selected.data_nascimento)}
+                  </p>
                 ) : (
-                  <p><strong>Data prevista:</strong> {formatDateOnly(selected.data_prevista)}</p>
+                  <p>
+                    <strong>Data prevista:</strong>{" "}
+                    {formatDateOnly(selected.data_prevista)}
+                  </p>
                 )}
                 <hr />
-                <p><strong>Morada:</strong> {selected.morada}</p>
-                <p><strong>Código Postal:</strong> {selected.codigo_postal}</p>
-                <p><strong>Localidade:</strong> {selected.localidade}</p>
-                <p><strong>CC/BI Nº:</strong> {selected.cc_bi_numero}</p>
-                <p><strong>NIF:</strong> {selected.nif}</p>
-                <p><strong>NISS:</strong> {selected.niss}</p>
-                <p><strong>Nº Utente:</strong> {selected.numero_utente}</p>
+                <p>
+                  <strong>Morada:</strong> {selected.morada}
+                </p>
+                <p>
+                  <strong>Código Postal:</strong> {selected.codigo_postal}
+                </p>
+                <p>
+                  <strong>Localidade:</strong> {selected.localidade}
+                </p>
+                <p>
+                  <strong>CC/BI Nº:</strong> {selected.cc_bi_numero}
+                </p>
+                <p>
+                  <strong>NIF:</strong> {selected.nif}
+                </p>
+                <p>
+                  <strong>NISS:</strong> {selected.niss}
+                </p>
+                <p>
+                  <strong>Nº Utente:</strong> {selected.numero_utente}
+                </p>
                 <hr />
                 <h4>Mãe</h4>
-                <p><strong>Nome:</strong> {selected.mae_nome}</p>
-                <p><strong>Profissão:</strong> {selected.mae_profissao}</p>
-                <p><strong>Local de emprego:</strong> {selected.mae_local_emprego}</p>
-                <p><strong>Morada:</strong> {selected.mae_morada}</p>
-                <p><strong>Código Postal:</strong> {selected.mae_codigo_postal}</p>
-                <p><strong>Localidade:</strong> {selected.mae_localidade}</p>
-                <p><strong>Telemóvel:</strong> {selected.mae_telemovel}</p>
-                <p><strong>Email:</strong> {selected.mae_email}</p>
+                <p>
+                  <strong>Nome:</strong> {selected.mae_nome}
+                </p>
+                <p>
+                  <strong>Profissão:</strong> {selected.mae_profissao}
+                </p>
+                <p>
+                  <strong>Local de emprego:</strong>{" "}
+                  {selected.mae_local_emprego}
+                </p>
+                <p>
+                  <strong>Morada:</strong> {selected.mae_morada}
+                </p>
+                <p>
+                  <strong>Código Postal:</strong> {selected.mae_codigo_postal}
+                </p>
+                <p>
+                  <strong>Localidade:</strong> {selected.mae_localidade}
+                </p>
+                <p>
+                  <strong>Telemóvel:</strong> {selected.mae_telemovel}
+                </p>
+                <p>
+                  <strong>Email:</strong> {selected.mae_email}
+                </p>
                 <hr />
                 <h4>Pai</h4>
-                <p><strong>Nome:</strong> {selected.pai_nome}</p>
-                <p><strong>Profissão:</strong> {selected.pai_profissao}</p>
-                <p><strong>Local de emprego:</strong> {selected.pai_local_emprego}</p>
-                <p><strong>Morada:</strong> {selected.pai_morada}</p>
-                <p><strong>Código Postal:</strong> {selected.pai_codigo_postal}</p>
-                <p><strong>Localidade:</strong> {selected.pai_localidade}</p>
-                <p><strong>Telemóvel:</strong> {selected.pai_telemovel}</p>
-                <p><strong>Email:</strong> {selected.pai_email}</p>
+                <p>
+                  <strong>Nome:</strong> {selected.pai_nome}
+                </p>
+                <p>
+                  <strong>Profissão:</strong> {selected.pai_profissao}
+                </p>
+                <p>
+                  <strong>Local de emprego:</strong>{" "}
+                  {selected.pai_local_emprego}
+                </p>
+                <p>
+                  <strong>Morada:</strong> {selected.pai_morada}
+                </p>
+                <p>
+                  <strong>Código Postal:</strong> {selected.pai_codigo_postal}
+                </p>
+                <p>
+                  <strong>Localidade:</strong> {selected.pai_localidade}
+                </p>
+                <p>
+                  <strong>Telemóvel:</strong> {selected.pai_telemovel}
+                </p>
+                <p>
+                  <strong>Email:</strong> {selected.pai_email}
+                </p>
                 <hr />
-                <p><strong>Irmãos a frequentar:</strong> {selected.irmaos_frequentam ? "Sim" : "Não"}</p>
-                <p><strong>Necessita apoio especial:</strong> {selected.necessita_apoio ? "Sim" : "Não"}</p>
+                <p>
+                  <strong>Irmãos a frequentar:</strong>{" "}
+                  {selected.irmaos_frequentam ? "Sim" : "Não"}
+                </p>
+                <p>
+                  <strong>Necessita apoio especial:</strong>{" "}
+                  {selected.necessita_apoio ? "Sim" : "Não"}
+                </p>
                 {selected.necessita_apoio && (
-                  <p><strong>Apoio especificação:</strong> {selected.apoio_especificacao}</p>
+                  <p>
+                    <strong>Apoio especificação:</strong>{" "}
+                    {selected.apoio_especificacao}
+                  </p>
                 )}
               </>
             ) : (
               <>
-                <p><strong>Data de nascimento:</strong> {formatDateOnly(selected.data_nascimento)}</p>
-                <p><strong>Morada:</strong> {selected.morada_completa}</p>
-                <p><strong>Código Postal:</strong> {selected.codigo_postal}</p>
-                <p><strong>Concelho:</strong> {selected.concelho}</p>
-                <p><strong>Distrito:</strong> {selected.distrito}</p>
-                <p><strong>CC/BI Nº:</strong> {selected.cc_bi_numero}</p>
-                <p><strong>NIF:</strong> {selected.nif}</p>
-                <p><strong>NISS:</strong> {selected.niss}</p>
-                <p><strong>Nº Utente:</strong> {selected.numero_utente}</p>
+                <p>
+                  <strong>Data de nascimento:</strong>{" "}
+                  {formatDateOnly(selected.data_nascimento)}
+                </p>
+                <p>
+                  <strong>Morada:</strong> {selected.morada_completa}
+                </p>
+                <p>
+                  <strong>Código Postal:</strong> {selected.codigo_postal}
+                </p>
+                <p>
+                  <strong>Concelho:</strong> {selected.concelho}
+                </p>
+                <p>
+                  <strong>Distrito:</strong> {selected.distrito}
+                </p>
+                <p>
+                  <strong>CC/BI Nº:</strong> {selected.cc_bi_numero}
+                </p>
+                <p>
+                  <strong>NIF:</strong> {selected.nif}
+                </p>
+                <p>
+                  <strong>NISS:</strong> {selected.niss}
+                </p>
+                <p>
+                  <strong>Nº Utente:</strong> {selected.numero_utente}
+                </p>
                 <hr />
-                <p><strong>Contacto:</strong> {selected.contacto_nome_completo}</p>
-                <p><strong>Telefone:</strong> {selected.contacto_telefone}</p>
-                <p><strong>Email:</strong> {selected.contacto_email}</p>
-                <p><strong>Parentesco:</strong> {selected.contacto_parentesco}</p>
+                <p>
+                  <strong>Contacto:</strong> {selected.contacto_nome_completo}
+                </p>
+                <p>
+                  <strong>Telefone:</strong> {selected.contacto_telefone}
+                </p>
+                <p>
+                  <strong>Email:</strong> {selected.contacto_email}
+                </p>
+                <p>
+                  <strong>Parentesco:</strong> {selected.contacto_parentesco}
+                </p>
                 {selectedType === "sad" && (
                   <>
                     <hr />
-                    <p><strong>Higiene pessoal:</strong> {selected.higiene_pessoal ? "Sim" : "Não"}</p>
+                    <p>
+                      <strong>Higiene pessoal:</strong>{" "}
+                      {selected.higiene_pessoal ? "Sim" : "Não"}
+                    </p>
                     {selected.higiene_pessoal && (
                       <p>
-                        <strong> • Periodicidade / vezes:</strong> {selected.periodicidade_higiene_pessoal || "(não indicado)"} — {selected.vezes_higiene_pessoal || "(não indicado)"}
+                        <strong> • Periodicidade / vezes:</strong>{" "}
+                        {selected.periodicidade_higiene_pessoal ||
+                          "(não indicado)"}{" "}
+                        — {selected.vezes_higiene_pessoal || "(não indicado)"}
                       </p>
                     )}
-                    <p><strong>Higiene habitacional:</strong> {selected.higiene_habitacional ? "Sim" : "Não"}</p>
+                    <p>
+                      <strong>Higiene habitacional:</strong>{" "}
+                      {selected.higiene_habitacional ? "Sim" : "Não"}
+                    </p>
                     {selected.higiene_habitacional && (
                       <p>
-                        <strong> • Periodicidade / vezes:</strong> {selected.periodicidade_higiene_habitacional || "(não indicado)"} — {selected.vezes_higiene_habitacional || "(não indicado)"}
+                        <strong> • Periodicidade / vezes:</strong>{" "}
+                        {selected.periodicidade_higiene_habitacional ||
+                          "(não indicado)"}{" "}
+                        —{" "}
+                        {selected.vezes_higiene_habitacional ||
+                          "(não indicado)"}
                       </p>
                     )}
-                    <p><strong>Refeições:</strong> {selected.refeicoes ? "Sim" : "Não"}</p>
+                    <p>
+                      <strong>Refeições:</strong>{" "}
+                      {selected.refeicoes ? "Sim" : "Não"}
+                    </p>
                     {selected.refeicoes && (
                       <p>
-                        <strong> • Periodicidade / vezes:</strong> {selected.periodicidade_refeicoes || "(não indicado)"} — {selected.vezes_refeicoes || "(não indicado)"}
+                        <strong> • Periodicidade / vezes:</strong>{" "}
+                        {selected.periodicidade_refeicoes || "(não indicado)"} —{" "}
+                        {selected.vezes_refeicoes || "(não indicado)"}
                       </p>
                     )}
-                    <p><strong>Tratamento de roupa:</strong> {selected.tratamento_roupa ? "Sim" : "Não"}</p>
+                    <p>
+                      <strong>Tratamento de roupa:</strong>{" "}
+                      {selected.tratamento_roupa ? "Sim" : "Não"}
+                    </p>
                     {selected.tratamento_roupa && (
                       <p>
-                        <strong> • Periodicidade / vezes:</strong> {selected.periodicidade_tratamento_roupa || "(não indicado)"} — {selected.vezes_tratamento_roupa || "(não indicado)"}
+                        <strong> • Periodicidade / vezes:</strong>{" "}
+                        {selected.periodicidade_tratamento_roupa ||
+                          "(não indicado)"}{" "}
+                        — {selected.vezes_tratamento_roupa || "(não indicado)"}
                       </p>
                     )}
                   </>
@@ -350,7 +554,9 @@ const Inscriptions = () => {
                 {selected.observacoes && (
                   <>
                     <hr />
-                    <p><strong>Observações:</strong></p>
+                    <p>
+                      <strong>Observações:</strong>
+                    </p>
                     <div className="obs-box">{selected.observacoes}</div>
                   </>
                 )}
