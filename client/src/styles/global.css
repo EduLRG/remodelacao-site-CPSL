@@ -35,6 +35,9 @@ body {
 .font-xlarge {
   font-size: 20px;
 }
+.font-xxlarge {
+  font-size: 22px;
+}
 
 /* Escala global de texto (inclui navbar e demais elementos) */
 .font-normal {
@@ -45,6 +48,9 @@ body {
 }
 .font-xlarge {
   font-size: 20px;
+}
+.font-xxlarge {
+  font-size: 22px;
 }
 
 /* Escala progressiva: +2px no large, +4px no xlarge (navbar fica fixa) */
@@ -92,6 +98,28 @@ body.font-xlarge .hero-section h1 { font-size: 60px; }
 body.font-xlarge .hero-section p { font-size: 28px; }
 body.font-xlarge .hero-section .btn-primary { font-size: 19px; padding: 15px 38px; }
 
+body.font-xxlarge p,
+body.font-xxlarge li,
+body.font-xxlarge label,
+body.font-xxlarge span,
+body.font-xxlarge button,
+body.font-xxlarge input,
+body.font-xxlarge textarea,
+body.font-xxlarge select {
+  font-size: 22px;
+}
+
+body.font-xxlarge h1 { font-size: 54px; }
+body.font-xxlarge h2 { font-size: 42px; }
+body.font-xxlarge h3 { font-size: 34px; }
+body.font-xxlarge h4 { font-size: 26px; }
+body.font-xxlarge h5 { font-size: 24px; }
+body.font-xxlarge h6 { font-size: 22px; }
+
+body.font-xxlarge .hero-section h1 { font-size: 62px; }
+body.font-xxlarge .hero-section p { font-size: 30px; }
+body.font-xxlarge .hero-section .btn-primary { font-size: 20px; padding: 16px 40px; }
+
 /* Fixar tamanhos da navbar/logo para não escalarem */
 .main-header h1 { font-size: 1.8rem; }
 .main-header span { font-size: 0.75rem; }
@@ -99,12 +127,14 @@ body.font-xlarge .hero-section .btn-primary { font-size: 19px; padding: 15px 38p
 
 /* Reforço: impedir scaling do logo/título no header quando fonte aumenta */
 body.font-large .main-header .header-logo h1,
-body.font-xlarge .main-header .header-logo h1 {
+body.font-xlarge .main-header .header-logo h1,
+body.font-xxlarge .main-header .header-logo h1 {
   font-size: 1.8rem !important;
 }
 
 body.font-large .main-header .header-logo span,
-body.font-xlarge .main-header .header-logo span {
+body.font-xlarge .main-header .header-logo span,
+body.font-xxlarge .main-header .header-logo span {
   font-size: 0.75rem !important;
 }
 body.font-xlarge .fixed-navbar,
@@ -113,6 +143,14 @@ body.font-xlarge .navbar-content a,
 body.font-xlarge .nav-links a,
 body.font-xlarge .nav-links a *,
 body.font-xlarge .navbar-content * {
+  font-size: 16px !important;
+}
+body.font-xxlarge .fixed-navbar,
+body.font-xxlarge .navbar-content,
+body.font-xxlarge .navbar-content a,
+body.font-xxlarge .nav-links a,
+body.font-xxlarge .nav-links a *,
+body.font-xxlarge .navbar-content * {
   font-size: 16px !important;
 }
 

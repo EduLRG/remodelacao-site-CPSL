@@ -82,6 +82,15 @@ CREATE TABLE IF NOT EXISTS conteudo_institucional (
     data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabela de introdução/Home (Hero)
+CREATE TABLE IF NOT EXISTS cpsl_intro (
+    id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+    titulo VARCHAR(300),
+    subtitulo VARCHAR(500),
+    imagem_fundo VARCHAR(500),
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Tabela de Media
 CREATE TABLE IF NOT EXISTS media (
     id SERIAL PRIMARY KEY,

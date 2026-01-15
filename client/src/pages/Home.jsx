@@ -17,6 +17,12 @@ const PDF_PLACEHOLDER =
     `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='350'><rect fill='#0b1930' width='100%' height='100%'/><rect x='40' y='30' rx='18' ry='18' width='520' height='290' fill='#132844' stroke='#4da3ff' stroke-width='6'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' fill='#4da3ff' font-size='64' font-family='Arial, sans-serif' font-weight='700'>PDF</text></svg>`
   );
 
+const DEFAULT_HERO = {
+  titulo: "Centro Paroquial e Social de Lanheses",
+  subtitulo: "Dedicando-nos ao apoio social à Pessoas Mais Velhas e à Infância",
+  imagem_fundo: "",
+};
+
 const formatDate = (dateStr) => {
   if (!dateStr) return "";
   try {
@@ -344,16 +350,26 @@ const Home = ({ isEditMode = false }) => {
   const [formSelections, setFormSelections] = useState({});
   const [crecheSelecao, setCrecheSelecao] = useState({});
   const [crecheNasceuState, setCrecheNasceuState] = useState({});
-  const [heroConfig, setHeroConfig] = useState({
-    titulo: "Centro Paroquial e Social de Lanheses",
-    subtitulo:
-      "Dedicando-nos ao apoio social à Pessoas Mais Velhas e à Infância",
-    imagem_fundo: "",
-  });
+  const [heroConfig, setHeroConfig] = useState(DEFAULT_HERO);
   const lastFocusedRef = useRef(null);
   const editModalRef = useRef(null);
   const addModalRef = useRef(null);
   const newsModalRef = useRef(null);
+
+  const normalizeHeroConfig = (data = {}) => {
+    const base = api.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
+    const normalizedImage = data.imagem_fundo
+      ? data.imagem_fundo.startsWith("http")
+        ? data.imagem_fundo
+        : `${base}${data.imagem_fundo}`
+      : "";
+
+    return {
+      ...DEFAULT_HERO,
+      ...data,
+      imagem_fundo: normalizedImage || DEFAULT_HERO.imagem_fundo,
+    };
+  };
 
   // Upload cover image (imagem_destaque) and set editingData.imagem_destaque
   const uploadCoverImage = async (file) => {
@@ -410,16 +426,34 @@ const Home = ({ isEditMode = false }) => {
     { id: "contactos", label: "Contactos" },
   ];
 
-  // Carregar configuração do hero do localStorage
+  // Carregar configuração do hero da API (fallback para localStorage)
   useEffect(() => {
-    const savedHeroConfig = localStorage.getItem("heroConfig");
-    if (savedHeroConfig) {
+    const loadHero = async () => {
       try {
-        setHeroConfig(JSON.parse(savedHeroConfig));
-      } catch (e) {
-        console.error("Erro ao carregar configuração do hero:", e);
+        const response = await api.get("/hero");
+        if (response.data?.success && response.data.data) {
+          const normalized = normalizeHeroConfig(response.data.data);
+          setHeroConfig(normalized);
+          localStorage.setItem("heroConfig", JSON.stringify(normalized));
+          return;
+        }
+      } catch (error) {
+        console.error("Erro ao carregar hero da API:", error);
       }
-    }
+
+      // fallback localStorage se API falhar
+      const savedHeroConfig = localStorage.getItem("heroConfig");
+      if (savedHeroConfig) {
+        try {
+          setHeroConfig(normalizeHeroConfig(JSON.parse(savedHeroConfig)));
+        } catch (e) {
+          console.error("Erro ao carregar configuração do hero:", e);
+        }
+      }
+    };
+
+    loadHero();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Buscar projetos da API
@@ -1001,14 +1035,18 @@ const Home = ({ isEditMode = false }) => {
         closeEditModal();
         alert("Notícia atualizada com sucesso!");
       } else if (editingSection === "hero") {
-        // Salvar configuração do hero no localStorage
-        const newHeroConfig = {
+        const payload = {
           titulo: editingData.titulo || heroConfig.titulo,
           subtitulo: editingData.subtitulo || heroConfig.subtitulo,
           imagem_fundo: editingData.imagem_fundo || heroConfig.imagem_fundo,
         };
-        setHeroConfig(newHeroConfig);
-        localStorage.setItem("heroConfig", JSON.stringify(newHeroConfig));
+
+        const response = await api.put("/hero", payload);
+        const savedHero = normalizeHeroConfig(
+          response.data?.data || payload
+        );
+        setHeroConfig(savedHero);
+        localStorage.setItem("heroConfig", JSON.stringify(savedHero));
         closeEditModal();
         alert("Hero atualizado com sucesso!");
       } else if (editingSection === "contactos") {
@@ -1087,70 +1125,35 @@ const Home = ({ isEditMode = false }) => {
               reconhecida pelo seu espírito inovador.
             </p>
           ) : (
-            <div className="institutional-content">
+            <div className="content-grid">
               {conteudoInstitucional.map((content) => (
-                <div
-                  key={content.id}
-                  className="content-subsection"
-                  onClick={() =>
-                    !isEditMode && setSelectedInstitutional(content)
-                  }
-                  style={{ cursor: !isEditMode ? "pointer" : "default" }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) =>
-                    !isEditMode &&
-                    e.key === "Enter" &&
-                    setSelectedInstitutional(content)
-                  }
-                >
-                  <div className="subsection-header">
-                    <h3>{content.titulo}</h3>
-                    {isEditMode && user && (
-                      <div className="subsection-actions">
-                        <button
-                          className="btn-edit-inline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit("institucional", content, content.id);
-                          }}
-                          title="Editar"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          className="btn-delete-inline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(content.id, "instituicao");
-                          }}
-                          title="Eliminar"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  {content.imagem && (
-                    <img
-                      src={content.imagem}
-                      alt={content.titulo}
-                      className="content-image"
-                      style={{ marginBottom: "1rem", maxWidth: "100%" }}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = PLACEHOLDER_SVG;
-                      }}
-                    />
+                <div key={content.id} className="content-card">
+                  {isEditMode && user && (
+                    <div className="subsection-actions">
+                      <button
+                        className="btn-edit-inline"
+                        onClick={() => handleEdit("institucional", content, content.id)}
+                        title="Editar"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        className="btn-delete-inline"
+                        onClick={() => handleDelete(content.id, "institucional")}
+                        title="Eliminar"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   )}
-                  {content.subtitulo && (
-                    <p
-                      className="content-summary"
-                      style={{ fontStyle: "italic", marginTop: 8 }}
-                    >
-                      {content.subtitulo}
-                    </p>
-                  )}
+
+                  <h3>{content.titulo}</h3>
+                  <p
+                    className="content-summary"
+                    style={{ fontStyle: "italic", marginTop: 8 }}
+                  >
+                    {content.subtitulo}
+                  </p>
                   <div
                     className="content-preview"
                     dangerouslySetInnerHTML={{ __html: content.conteudo || "" }}
@@ -2161,7 +2164,7 @@ const Home = ({ isEditMode = false }) => {
                           }
                         }}
                       >
-                        <div className="form-row">
+                        <div className="form-row row-name-birth">
                           <div className="form-field name-field">
                             <label htmlFor={`nome_completo-${secao.id}`}>
                               Nome completo
@@ -2194,7 +2197,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row row-address-2">
                           <div className="form-field">
                             <label htmlFor={`morada_completa-${secao.id}`}>
                               Morada completa
@@ -2225,9 +2228,6 @@ const Home = ({ isEditMode = false }) => {
                               />
                             </div>
                           </div>
-                        </div>
-
-                        <div className="form-row">
                           <div className="form-field">
                             <label htmlFor={`concelho-${secao.id}`}>
                               Concelho
@@ -2258,7 +2258,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row row-id-4">
                           <div className="form-field">
                             <label htmlFor={`cc_bi_numero-${secao.id}`}>
                               CC/BI Nº
@@ -2285,9 +2285,6 @@ const Home = ({ isEditMode = false }) => {
                               />
                             </div>
                           </div>
-                        </div>
-
-                        <div className="form-row">
                           <div className="form-field">
                             <label htmlFor={`niss-${secao.id}`}>NISS</label>
                             <div className="input-with-icon">
@@ -2316,7 +2313,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row row-contact-2a">
                           <div className="form-field">
                             <label
                               htmlFor={`contacto_nome_completo-${secao.id}`}
@@ -2334,23 +2331,6 @@ const Home = ({ isEditMode = false }) => {
                             </div>
                           </div>
                           <div className="form-field">
-                            <label htmlFor={`contacto_telefone-${secao.id}`}>
-                              Telefone do contacto
-                            </label>
-                            <div className="input-with-icon">
-                              <span className="input-icon">☎️</span>
-                              <input
-                                id={`contacto_telefone-${secao.id}`}
-                                name="contacto_telefone"
-                                placeholder="Telefone"
-                                required
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="form-row">
-                          <div className="form-field">
                             <label htmlFor={`contacto_email-${secao.id}`}>
                               Email do contacto
                             </label>
@@ -2361,6 +2341,23 @@ const Home = ({ isEditMode = false }) => {
                                 name="contacto_email"
                                 type="email"
                                 placeholder="email@exemplo.pt"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="form-row row-contact-2b">
+                          <div className="form-field">
+                            <label htmlFor={`contacto_telefone-${secao.id}`}>
+                              Telefone do contacto
+                            </label>
+                            <div className="input-with-icon">
+                              <span className="input-icon">☎️</span>
+                              <input
+                                id={`contacto_telefone-${secao.id}`}
+                                name="contacto_telefone"
+                                placeholder="Telefone"
                                 required
                               />
                             </div>
@@ -3099,6 +3096,37 @@ const Home = ({ isEditMode = false }) => {
                                 placeholder="0000-000"
                                 pattern={POSTAL_PATTERN}
                                 title={POSTAL_TITLE}
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="form-row row-location-2">
+                          <div className="form-field">
+                            <label htmlFor={`concelho-${secao.id}`}>
+                              Concelho
+                            </label>
+                            <div className="input-with-icon">
+                              <span className="input-icon">🏘️</span>
+                              <input
+                                id={`concelho-${secao.id}`}
+                                name="concelho"
+                                placeholder="Concelho"
+                                required
+                              />
+                            </div>
+                          </div>
+                          <div className="form-field">
+                            <label htmlFor={`distrito-${secao.id}`}>
+                              Distrito
+                            </label>
+                            <div className="input-with-icon">
+                              <span className="input-icon">🗺️</span>
+                              <input
+                                id={`distrito-${secao.id}`}
+                                name="distrito"
+                                placeholder="Distrito"
                                 required
                               />
                             </div>
@@ -4320,7 +4348,11 @@ const Home = ({ isEditMode = false }) => {
                                 try {
                                   const formData = new FormData();
                                   formData.append("file", f);
-                                  formData.append("tabela_referencia", "hero");
+                                  formData.append(
+                                    "tabela_referencia",
+                                    "cpsl_intro"
+                                  );
+                                  formData.append("id_referencia", 1);
                                   const response = await api.post(
                                     "/media",
                                     formData,

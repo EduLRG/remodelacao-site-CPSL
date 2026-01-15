@@ -851,7 +851,8 @@
   color: var(--primary-color, #2c3e50);
 }
 .contact-form .form-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 14px;
   align-items: center;
 }
@@ -897,6 +898,13 @@
   font-size: 1.05rem;
   outline: none;
 }
+.input-with-icon textarea {
+  flex: 1;
+  border: none;
+  padding: 8px 6px;
+  font-size: 1.05rem;
+  outline: none;
+}
 .input-with-icon select {
   flex: 1;
   border: none;
@@ -908,33 +916,100 @@
 
 /* Hide icons only inside ERPI form */
 .erpi-form .input-with-icon {
-  gap: 0;
+  gap: 8px;
 }
 .erpi-form .input-with-icon .input-icon {
-  display: none;
-  width: 0;
-  height: 0;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
   padding: 0;
   margin: 0;
 }
 
 /* Width rules: email wider, name and subject narrower */
 .name-field {
-  flex: 1 1 40%;
+  grid-column: span 2;
 }
 .email-field {
-  flex: 1 1 60%;
+  grid-column: span 2;
 }
 .subject-field {
-  flex: 1 1 100%;
+  grid-column: span 4;
   max-width: 100%;
 }
 .message-field {
-  flex: 1 1 100%;
+  grid-column: span 4;
 }
 
 .form-actions {
   text-align: right;
+}
+.erpi-form .form-row,
+.creche-form .form-row,
+.sad-form .form-row,
+.centro-dia-form .form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.erpi-form .form-row.tight-3 {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.erpi-form .form-row.tight-4 {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.erpi-form .form-row.row-name-birth {
+  grid-template-columns: minmax(320px, 3.5fr) minmax(130px, 1fr);
+}
+
+.erpi-form .form-row.row-address {
+  grid-template-columns: minmax(360px, 4fr) minmax(120px, 1fr);
+}
+
+.erpi-form .form-row.row-contact {
+  grid-template-columns: minmax(300px, 3fr) minmax(130px, 1fr) minmax(260px, 2.5fr) minmax(130px, 1fr);
+}
+
+.erpi-form .form-row.row-address-4 {
+  grid-template-columns: minmax(360px, 4fr) minmax(120px, 1fr) minmax(180px, 1.2fr) minmax(180px, 1.2fr);
+}
+
+.erpi-form .form-row.row-address-2 {
+  grid-template-columns: minmax(320px, 3fr) minmax(140px, 1fr);
+}
+
+.erpi-form .form-row.row-location-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.erpi-form .form-row.row-id-4 {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.erpi-form .form-row.row-contact-2a {
+  grid-template-columns: minmax(300px, 3fr) minmax(260px, 2.5fr);
+}
+
+.erpi-form .form-row.row-contact-2b {
+  grid-template-columns: minmax(150px, 1.2fr) minmax(180px, 1.5fr);
+}
+
+.erpi-form .form-field,
+.creche-form .form-field,
+.sad-form .form-field,
+.centro-dia-form .form-field {
+  width: 100%;
+}
+
+.erpi-form .form-row.wide-2 {
+  grid-template-columns: 2fr 1fr;
+}
+
+.erpi-form .form-row.wide-3 {
+  grid-template-columns: 2fr 1fr 1fr;
 }
 
 .form-selector {

@@ -2,6 +2,8 @@ import React, { createContext, useState, useEffect } from "react";
 
 export const AccessibilityContext = createContext();
 
+const FONT_SIZES = ["normal", "large", "xlarge", "xxlarge"];
+
 export const AccessibilityProvider = ({ children }) => {
   const [fontSize, setFontSize] = useState("normal");
   const [highContrast, setHighContrast] = useState(false);
@@ -10,7 +12,9 @@ export const AccessibilityProvider = ({ children }) => {
     const savedFontSize = localStorage.getItem("fontSize");
     const savedContrast = localStorage.getItem("highContrast");
 
-    if (savedFontSize) setFontSize(savedFontSize);
+    if (savedFontSize && FONT_SIZES.includes(savedFontSize)) {
+      setFontSize(savedFontSize);
+    }
     if (savedContrast) setHighContrast(savedContrast === "true");
   }, []);
 
@@ -24,18 +28,16 @@ export const AccessibilityProvider = ({ children }) => {
   }, [fontSize, highContrast]);
 
   const increaseFontSize = () => {
-    const sizes = ["normal", "large", "xlarge"];
-    const currentIndex = sizes.indexOf(fontSize);
-    if (currentIndex < sizes.length - 1) {
-      setFontSize(sizes[currentIndex + 1]);
+    const currentIndex = FONT_SIZES.indexOf(fontSize);
+    if (currentIndex < FONT_SIZES.length - 1) {
+      setFontSize(FONT_SIZES[currentIndex + 1]);
     }
   };
 
   const decreaseFontSize = () => {
-    const sizes = ["normal", "large", "xlarge"];
-    const currentIndex = sizes.indexOf(fontSize);
+    const currentIndex = FONT_SIZES.indexOf(fontSize);
     if (currentIndex > 0) {
-      setFontSize(sizes[currentIndex - 1]);
+      setFontSize(FONT_SIZES[currentIndex - 1]);
     }
   };
 

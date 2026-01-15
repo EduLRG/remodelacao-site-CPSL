@@ -122,6 +122,7 @@ app.use("/api/conteudo", require("./routes/conteudo"));
 app.use("/api/media", require("./routes/media"));
 app.use("/api/mensagens", require("./routes/mensagens"));
 app.use("/api/secoes-personalizadas", require("./routes/secoesPersonalizadas"));
+app.use("/api/hero", require("./routes/hero"));
 
 // Rota de teste
 app.get("/api/health", (req, res) => {
