@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
+import toast from "react-hot-toast";
 import Header from "../components/Header";
 import api from "../services/api";
 import { AuthContext } from "../contexts/AuthContext";
@@ -58,7 +59,7 @@ function RichTextEditor({ value, onChange, api }) {
       return url.startsWith("http") ? url : `${base}${url}`;
     } catch (err) {
       console.error("Erro ao enviar imagem:", err);
-      alert("Erro ao enviar imagem.");
+      toast.error("Erro ao enviar imagem.");
       return null;
     }
   };
@@ -338,6 +339,11 @@ const Home = ({ isEditMode = false }) => {
   const [selectedNews, setSelectedNews] = useState(null);
   const [selectedInstitutional, setSelectedInstitutional] = useState(null);
   const [selectedResposta, setSelectedResposta] = useState(null);
+  const [confirmState, setConfirmState] = useState({
+    open: false,
+    message: "",
+    resolve: null,
+  });
   const [secoesPersonalizadas, setSecoesPersonalizadas] = useState([]);
   const [itensSecoesPersonalizadas, setItensSecoesPersonalizadas] = useState(
     {},
@@ -412,7 +418,7 @@ const Home = ({ isEditMode = false }) => {
       setEditingData((d) => ({ ...d, [imagemField]: url }));
     } catch (err) {
       console.error("Erro ao enviar imagem de capa:", err);
-      alert("Erro ao enviar imagem de capa.");
+      toast.error("Erro ao enviar imagem de capa.");
     }
   };
 
@@ -795,7 +801,7 @@ const Home = ({ isEditMode = false }) => {
 
   const handleTranspDelete = async (docId) => {
     const confirmed = window.confirm(
-      "Tem a certeza que deseja eliminar este documento?",
+      "Tem a certeza que deseja eliminar este documento?"
     );
     if (!confirmed) return;
 
@@ -870,9 +876,10 @@ const Home = ({ isEditMode = false }) => {
 
   // Eliminar subseção
   const handleDelete = async (id, section, secaoId = null) => {
-    if (!window.confirm("Tem certeza que deseja eliminar este item?")) {
-      return;
-    }
+    const confirmed = await confirmAction(
+      "Tem certeza que deseja eliminar este item?"
+    );
+    if (!confirmed) return;
     try {
       if (section === "secao-personalizada" && secaoId) {
         await api.delete(`/secoes-personalizadas/${secaoId}/itens/${id}`);
@@ -945,6 +952,18 @@ const Home = ({ isEditMode = false }) => {
     );
     if (el) el.focus();
   };
+
+  const confirmAction = (message) =>
+    new Promise((resolve) => {
+      setConfirmState({ open: true, message, resolve });
+    });
+
+  const handleConfirm = (confirmed) => {
+    if (confirmState.resolve) confirmState.resolve(confirmed);
+    setConfirmState({ open: false, message: "", resolve: null });
+  };
+
+  const alert = (message) => toast(message);
 
   useEffect(() => {
     if (showEditModal) {
@@ -1927,7 +1946,7 @@ const Home = ({ isEditMode = false }) => {
                       onClick={async () => {
                         if (
                           window.confirm(
-                            "Tem certeza que deseja remover o formulário desta secção?",
+                            "Tem certeza que deseja remover o formulário desta secção?"
                           )
                         ) {
                           try {
@@ -4145,6 +4164,34 @@ const Home = ({ isEditMode = false }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {confirmState.open && (
+        <div
+          className="confirm-modal-overlay"
+          onClick={() => handleConfirm(false)}
+        >
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Confirmação</h3>
+            <p>{confirmState.message}</p>
+            <div className="confirm-modal-actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => handleConfirm(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => handleConfirm(true)}
+              >
+                Confirmar
+              </button>
+            </div>
           </div>
         </div>
       )}
