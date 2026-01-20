@@ -29,6 +29,7 @@ function SectionItemsManagement() {
       return;
     }
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, navigate, secaoId]);
 
   const fetchData = async () => {

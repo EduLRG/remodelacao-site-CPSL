@@ -6,7 +6,6 @@ import "../styles/Messages.css";
 
 const Messages = () => {
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
   const [mensagens, setMensagens] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
