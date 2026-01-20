@@ -965,12 +965,16 @@
   grid-template-columns: minmax(320px, 3.5fr) minmax(130px, 1fr);
 }
 
+.erpi-form .form-row.row-name-birth .name-field {
+  grid-column: auto;
+}
+
 .erpi-form .form-row.row-address {
   grid-template-columns: minmax(360px, 4fr) minmax(120px, 1fr);
 }
 
 .erpi-form .form-row.row-contact {
-  grid-template-columns: minmax(300px, 3fr) minmax(130px, 1fr) minmax(260px, 2.5fr) minmax(130px, 1fr);
+  grid-template-columns: minmax(300px, 3fr) minmax(140px, 1fr);
 }
 
 .erpi-form .form-row.row-address-4 {
@@ -985,16 +989,92 @@
   grid-template-columns: 1fr 1fr;
 }
 
+.centro-dia-form .form-row.row-address {
+  grid-template-columns: minmax(360px, 4fr) minmax(120px, 1fr);
+}
+
+.centro-dia-form .form-row.row-name-birth {
+  grid-template-columns: minmax(320px, 3.5fr) minmax(130px, 1fr);
+}
+
+.centro-dia-form .form-row.row-name-birth .name-field {
+  grid-column: auto;
+}
+
+.centro-dia-form .form-row.row-contact {
+  grid-template-columns: minmax(300px, 3fr) minmax(140px, 1fr);
+}
+
+.centro-dia-form .form-row.row-location-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.centro-dia-form .form-row.row-id-4 {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.centro-dia-form .form-row.row-contact-2 {
+  grid-template-columns: minmax(300px, 3fr) minmax(140px, 1fr);
+}
+
+.sad-form .form-row.row-name-birth {
+  grid-template-columns: minmax(320px, 3.5fr) minmax(130px, 1fr);
+}
+
+.sad-form .form-row.row-name-birth .name-field {
+  grid-column: auto;
+}
+
+.sad-form .form-row.row-address {
+  grid-template-columns: minmax(360px, 4fr) minmax(120px, 1fr);
+}
+
+.sad-form .form-row.row-location-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.sad-form .form-row.row-contact {
+  grid-template-columns: minmax(300px, 3fr) minmax(140px, 1fr);
+}
+
+.sad-form .form-row.row-contact-2 {
+  grid-template-columns: minmax(300px, 3fr) minmax(140px, 1fr);
+}
+
+.sad-form .form-row.checkbox-row {
+  grid-template-columns: 1fr;
+}
+
 .erpi-form .form-row.row-id-4 {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
-.erpi-form .form-row.row-contact-2a {
-  grid-template-columns: minmax(300px, 3fr) minmax(260px, 2.5fr);
+.erpi-form .form-row.row-contact-2 {
+  grid-template-columns: minmax(300px, 3fr) minmax(140px, 1fr);
 }
 
-.erpi-form .form-row.row-contact-2b {
-  grid-template-columns: minmax(150px, 1.2fr) minmax(180px, 1.5fr);
+.creche-form .form-row.row-name-birth {
+  grid-template-columns: minmax(320px, 3.5fr) minmax(130px, 1fr);
+}
+
+.creche-form .form-row.row-name-birth .name-field {
+  grid-column: auto;
+}
+
+.creche-form .form-row.row-address-3 {
+  grid-template-columns: minmax(300px, 3fr) minmax(200px, 2fr) minmax(120px, 1fr);
+}
+
+.creche-form .form-row.row-parent-work {
+  grid-template-columns: minmax(220px, 2fr) minmax(260px, 2.4fr);
+}
+
+.creche-form .form-row.row-parent-address {
+  grid-template-columns: minmax(300px, 3fr) minmax(200px, 2fr) minmax(120px, 1fr);
+}
+
+.creche-form .form-row.row-parent-contact {
+  grid-template-columns: minmax(300px, 3fr) minmax(140px, 1fr);
 }
 
 .erpi-form .form-field,

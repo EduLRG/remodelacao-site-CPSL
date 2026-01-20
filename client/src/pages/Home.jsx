@@ -2102,6 +2102,7 @@ const Home = ({ isEditMode = false }) => {
                     <>
                       <h3>{selectedFormLabel || "Formulário ERPI"}</h3>
                       <form
+                        className="erpi-form"
                         onSubmit={async (e) => {
                           e.preventDefault();
                           const form = e.currentTarget;
@@ -2197,7 +2198,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row row-address-2">
+                        <div className="form-row row-address">
                           <div className="form-field">
                             <label htmlFor={`morada_completa-${secao.id}`}>
                               Morada completa
@@ -2228,6 +2229,9 @@ const Home = ({ isEditMode = false }) => {
                               />
                             </div>
                           </div>
+                        </div>
+
+                        <div className="form-row row-location-2">
                           <div className="form-field">
                             <label htmlFor={`concelho-${secao.id}`}>
                               Concelho
@@ -2313,7 +2317,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row row-contact-2a">
+                        <div className="form-row row-contact">
                           <div className="form-field">
                             <label
                               htmlFor={`contacto_nome_completo-${secao.id}`}
@@ -2331,6 +2335,23 @@ const Home = ({ isEditMode = false }) => {
                             </div>
                           </div>
                           <div className="form-field">
+                            <label htmlFor={`contacto_telefone-${secao.id}`}>
+                              Telefone do contacto
+                            </label>
+                            <div className="input-with-icon">
+                              <span className="input-icon">☎️</span>
+                              <input
+                                id={`contacto_telefone-${secao.id}`}
+                                name="contacto_telefone"
+                                placeholder="Telefone"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="form-row row-contact-2">
+                          <div className="form-field">
                             <label htmlFor={`contacto_email-${secao.id}`}>
                               Email do contacto
                             </label>
@@ -2341,23 +2362,6 @@ const Home = ({ isEditMode = false }) => {
                                 name="contacto_email"
                                 type="email"
                                 placeholder="email@exemplo.pt"
-                                required
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="form-row row-contact-2b">
-                          <div className="form-field">
-                            <label htmlFor={`contacto_telefone-${secao.id}`}>
-                              Telefone do contacto
-                            </label>
-                            <div className="input-with-icon">
-                              <span className="input-icon">☎️</span>
-                              <input
-                                id={`contacto_telefone-${secao.id}`}
-                                name="contacto_telefone"
-                                placeholder="Telefone"
                                 required
                               />
                             </div>
@@ -2403,7 +2407,7 @@ const Home = ({ isEditMode = false }) => {
                     <>
                       <h3>{selectedFormLabel || "Formulário Creche"}</h3>
                       <form
-                        className="contact-form"
+                        className="creche-form"
                         onSubmit={async (e) => {
                           e.preventDefault();
                           const form = e.currentTarget;
@@ -2538,56 +2542,6 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-field">
-                          <label>Nome completo da criança *</label>
-                          <div className="input-with-icon">
-                            <span className="input-icon">👶</span>
-                            <input
-                              name="nome_completo"
-                              required
-                              placeholder="Nome completo"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="form-row">
-                          <div className="form-field">
-                            <label>Morada *</label>
-                            <div className="input-with-icon">
-                              <span className="input-icon">🏠</span>
-                              <input
-                                name="morada"
-                                required
-                                placeholder="Rua, nº, andar"
-                              />
-                            </div>
-                          </div>
-                          <div className="form-field">
-                            <label>Código Postal *</label>
-                            <div className="input-with-icon">
-                              <span className="input-icon">🏷️</span>
-                              <input
-                                name="codigo_postal"
-                                required
-                                placeholder="0000-000"
-                                pattern={POSTAL_PATTERN}
-                                title={POSTAL_TITLE}
-                              />
-                            </div>
-                          </div>
-                          <div className="form-field">
-                            <label>Localidade *</label>
-                            <div className="input-with-icon">
-                              <span className="input-icon">🏘️</span>
-                              <input
-                                name="localidade"
-                                required
-                                placeholder="Localidade"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
                         <div className="form-row">
                           <div className="form-field">
                             <label>A criança já nasceu? *</label>
@@ -2626,37 +2580,82 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        {crecheNasceuState[secao.id] === true && (
+                        <div className="form-row row-name-birth">
+                          <div className="form-field name-field">
+                            <label>Nome completo da criança *</label>
+                            <div className="input-with-icon">
+                              <span className="input-icon">👶</span>
+                              <input
+                                name="nome_completo"
+                                required
+                                placeholder="Nome completo"
+                              />
+                            </div>
+                          </div>
                           <div className="form-field">
-                            <label>Data de nascimento *</label>
+                            <label>
+                              {crecheNasceuState[secao.id]
+                                ? "Data de nascimento *"
+                                : "Data prevista *"}
+                            </label>
                             <div className="input-with-icon">
                               <span className="input-icon">📅</span>
                               <input
                                 type="date"
-                                name="data_nascimento"
+                                name={
+                                  crecheNasceuState[secao.id]
+                                    ? "data_nascimento"
+                                    : "data_prevista"
+                                }
                                 min={DATE_MIN}
-                                max={DATE_MAX}
+                                max={
+                                  crecheNasceuState[secao.id]
+                                    ? DATE_MAX
+                                    : DATE_FUTURE_MAX
+                                }
                                 required
                               />
                             </div>
                           </div>
-                        )}
+                        </div>
 
-                        {crecheNasceuState[secao.id] === false && (
+                        <div className="form-row row-address-3">
                           <div className="form-field">
-                            <label>Data prevista *</label>
+                            <label>Morada *</label>
                             <div className="input-with-icon">
-                              <span className="input-icon">📅</span>
+                              <span className="input-icon">🏠</span>
                               <input
-                                type="date"
-                                name="data_prevista"
-                                min={DATE_MIN}
-                                max={DATE_FUTURE_MAX}
+                                name="morada"
                                 required
+                                placeholder="Rua, nº, andar"
                               />
                             </div>
                           </div>
-                        )}
+                          <div className="form-field">
+                            <label>Localidade *</label>
+                            <div className="input-with-icon">
+                              <span className="input-icon">🏘️</span>
+                              <input
+                                name="localidade"
+                                required
+                                placeholder="Localidade"
+                              />
+                            </div>
+                          </div>
+                          <div className="form-field">
+                            <label>Código Postal *</label>
+                            <div className="input-with-icon">
+                              <span className="input-icon">🏷️</span>
+                              <input
+                                name="codigo_postal"
+                                required
+                                placeholder="0000-000"
+                                pattern={POSTAL_PATTERN}
+                                title={POSTAL_TITLE}
+                              />
+                            </div>
+                          </div>
+                        </div>
 
                         <div className="form-row">
                           <div className="form-field">
@@ -2707,6 +2706,8 @@ const Home = ({ isEditMode = false }) => {
                               />
                             </div>
                           </div>
+                        </div>
+                        <div className="form-row row-parent-work">
                           <div className="form-field">
                             <label>Profissão</label>
                             <div className="input-with-icon">
@@ -2728,12 +2729,22 @@ const Home = ({ isEditMode = false }) => {
                             </div>
                           </div>
                         </div>
-                        <div className="form-row">
+                        <div className="form-row row-parent-address">
                           <div className="form-field">
                             <label>Morada</label>
                             <div className="input-with-icon">
                               <span className="input-icon">🏠</span>
                               <input name="mae_morada" placeholder="Morada" />
+                            </div>
+                          </div>
+                          <div className="form-field">
+                            <label>Localidade</label>
+                            <div className="input-with-icon">
+                              <span className="input-icon">🏘️</span>
+                              <input
+                                name="mae_localidade"
+                                placeholder="Localidade"
+                              />
                             </div>
                           </div>
                           <div className="form-field">
@@ -2748,28 +2759,8 @@ const Home = ({ isEditMode = false }) => {
                               />
                             </div>
                           </div>
-                          <div className="form-field">
-                            <label>Localidade</label>
-                            <div className="input-with-icon">
-                              <span className="input-icon">🏘️</span>
-                              <input
-                                name="mae_localidade"
-                                placeholder="Localidade"
-                              />
-                            </div>
-                          </div>
                         </div>
-                        <div className="form-row">
-                          <div className="form-field">
-                            <label>Telemóvel</label>
-                            <div className="input-with-icon">
-                              <span className="input-icon">📱</span>
-                              <input
-                                name="mae_telemovel"
-                                placeholder="Telemóvel"
-                              />
-                            </div>
-                          </div>
+                        <div className="form-row row-parent-contact">
                           <div className="form-field">
                             <label>Email</label>
                             <div className="input-with-icon">
@@ -2778,6 +2769,16 @@ const Home = ({ isEditMode = false }) => {
                                 name="mae_email"
                                 type="email"
                                 placeholder="email@exemplo.pt"
+                              />
+                            </div>
+                          </div>
+                          <div className="form-field">
+                            <label>Telemóvel</label>
+                            <div className="input-with-icon">
+                              <span className="input-icon">📱</span>
+                              <input
+                                name="mae_telemovel"
+                                placeholder="Telemóvel"
                               />
                             </div>
                           </div>
@@ -2794,6 +2795,8 @@ const Home = ({ isEditMode = false }) => {
                               />
                             </div>
                           </div>
+                        </div>
+                        <div className="form-row row-parent-work">
                           <div className="form-field">
                             <label>Profissão do pai</label>
                             <div className="input-with-icon">
@@ -2815,12 +2818,22 @@ const Home = ({ isEditMode = false }) => {
                             </div>
                           </div>
                         </div>
-                        <div className="form-row">
+                        <div className="form-row row-parent-address">
                           <div className="form-field">
                             <label>Morada do pai</label>
                             <div className="input-with-icon">
                               <span className="input-icon">🏠</span>
                               <input name="pai_morada" placeholder="Morada" />
+                            </div>
+                          </div>
+                          <div className="form-field">
+                            <label>Localidade</label>
+                            <div className="input-with-icon">
+                              <span className="input-icon">🏘️</span>
+                              <input
+                                name="pai_localidade"
+                                placeholder="Localidade"
+                              />
                             </div>
                           </div>
                           <div className="form-field">
@@ -2835,28 +2848,8 @@ const Home = ({ isEditMode = false }) => {
                               />
                             </div>
                           </div>
-                          <div className="form-field">
-                            <label>Localidade</label>
-                            <div className="input-with-icon">
-                              <span className="input-icon">🏘️</span>
-                              <input
-                                name="pai_localidade"
-                                placeholder="Localidade"
-                              />
-                            </div>
-                          </div>
                         </div>
-                        <div className="form-row">
-                          <div className="form-field">
-                            <label>Telemóvel</label>
-                            <div className="input-with-icon">
-                              <span className="input-icon">📱</span>
-                              <input
-                                name="pai_telemovel"
-                                placeholder="Telemóvel"
-                              />
-                            </div>
-                          </div>
+                        <div className="form-row row-parent-contact">
                           <div className="form-field">
                             <label>Email</label>
                             <div className="input-with-icon">
@@ -2865,6 +2858,16 @@ const Home = ({ isEditMode = false }) => {
                                 name="pai_email"
                                 type="email"
                                 placeholder="email@exemplo.pt"
+                              />
+                            </div>
+                          </div>
+                          <div className="form-field">
+                            <label>Telemóvel</label>
+                            <div className="input-with-icon">
+                              <span className="input-icon">📱</span>
+                              <input
+                                name="pai_telemovel"
+                                placeholder="Telemóvel"
                               />
                             </div>
                           </div>
@@ -2962,6 +2965,7 @@ const Home = ({ isEditMode = false }) => {
                     <>
                       <h3>{selectedFormLabel || "Formulário Centro de Dia"}</h3>
                       <form
+                        className="centro-dia-form"
                         onSubmit={async (e) => {
                           e.preventDefault();
                           const form = e.currentTarget;
@@ -3036,7 +3040,7 @@ const Home = ({ isEditMode = false }) => {
                           }
                         }}
                       >
-                        <div className="form-row">
+                        <div className="form-row row-name-birth">
                           <div className="form-field name-field">
                             <label htmlFor={`nome_completo-${secao.id}`}>
                               Nome completo
@@ -3069,7 +3073,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row row-address">
                           <div className="form-field">
                             <label htmlFor={`morada_completa-${secao.id}`}>
                               Morada completa
@@ -3133,38 +3137,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row">
-                          <div className="form-field">
-                            <label htmlFor={`concelho-${secao.id}`}>
-                              Concelho
-                            </label>
-                            <div className="input-with-icon">
-                              <span className="input-icon">🏘️</span>
-                              <input
-                                id={`concelho-${secao.id}`}
-                                name="concelho"
-                                placeholder="Concelho"
-                                required
-                              />
-                            </div>
-                          </div>
-                          <div className="form-field">
-                            <label htmlFor={`distrito-${secao.id}`}>
-                              Distrito
-                            </label>
-                            <div className="input-with-icon">
-                              <span className="input-icon">🗺️</span>
-                              <input
-                                id={`distrito-${secao.id}`}
-                                name="distrito"
-                                placeholder="Distrito"
-                                required
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="form-row">
+                        <div className="form-row row-id-4">
                           <div className="form-field">
                             <label htmlFor={`cc_bi_numero-${secao.id}`}>
                               CC/BI Nº
@@ -3191,9 +3164,6 @@ const Home = ({ isEditMode = false }) => {
                               />
                             </div>
                           </div>
-                        </div>
-
-                        <div className="form-row">
                           <div className="form-field">
                             <label htmlFor={`niss-${secao.id}`}>NISS</label>
                             <div className="input-with-icon">
@@ -3222,7 +3192,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row row-contact">
                           <div className="form-field">
                             <label
                               htmlFor={`contacto_nome_completo-${secao.id}`}
@@ -3255,7 +3225,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row row-contact-2">
                           <div className="form-field">
                             <label htmlFor={`contacto_email-${secao.id}`}>
                               Email do contacto
@@ -3312,6 +3282,7 @@ const Home = ({ isEditMode = false }) => {
                     <>
                       <h3>{selectedFormLabel || "Formulário SAD"}</h3>
                       <form
+                        className="sad-form"
                         onSubmit={async (e) => {
                           e.preventDefault();
                           const form = e.currentTarget;
@@ -3409,7 +3380,7 @@ const Home = ({ isEditMode = false }) => {
                           }
                         }}
                       >
-                        <div className="form-row">
+                        <div className="form-row row-name-birth">
                           <div className="form-field name-field">
                             <label htmlFor={`nome_completo-${secao.id}`}>
                               Nome completo
@@ -3442,7 +3413,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row row-address">
                           <div className="form-field">
                             <label htmlFor={`morada_completa-${secao.id}`}>
                               Morada completa
@@ -3475,7 +3446,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row row-location-2">
                           <div className="form-field">
                             <label htmlFor={`concelho-${secao.id}`}>
                               Concelho
@@ -3506,7 +3477,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row row-id-4">
                           <div className="form-field">
                             <label htmlFor={`cc_bi_numero-${secao.id}`}>
                               CC/BI Nº
@@ -3533,9 +3504,6 @@ const Home = ({ isEditMode = false }) => {
                               />
                             </div>
                           </div>
-                        </div>
-
-                        <div className="form-row">
                           <div className="form-field">
                             <label htmlFor={`niss-${secao.id}`}>NISS</label>
                             <div className="input-with-icon">
@@ -3564,7 +3532,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row row-contact">
                           <div className="form-field">
                             <label
                               htmlFor={`contacto_nome_completo-${secao.id}`}
@@ -3597,7 +3565,7 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row row-contact-2">
                           <div className="form-field">
                             <label htmlFor={`contacto_email-${secao.id}`}>
                               Email do contacto
@@ -3642,7 +3610,7 @@ const Home = ({ isEditMode = false }) => {
                         </div>
 
                         {/* Serviços marcáveis */}
-                        <div className="form-row">
+                        <div className="form-row checkbox-row">
                           <div className="form-field checkbox-field">
                             <label>
                               <input
@@ -3661,6 +3629,52 @@ const Home = ({ isEditMode = false }) => {
                               />
                               Higiene pessoal
                             </label>
+                            <div
+                              id={`wrap-higiene_pessoal-${secao.id}`}
+                              style={{ display: "none" }}
+                              className="service-config"
+                            >
+                              <div className="form-row">
+                                <div className="form-field">
+                                  <label
+                                    htmlFor={`periodicidade_higiene_pessoal-${secao.id}`}
+                                  >
+                                    Periodicidade (Higiene pessoal)
+                                  </label>
+                                  <select
+                                    id={`periodicidade_higiene_pessoal-${secao.id}`}
+                                    name="periodicidade_higiene_pessoal"
+                                    defaultValue=""
+                                  >
+                                    <option value="">Selecione</option>
+                                    <option value="segunda a sexta">
+                                      Segunda a sexta
+                                    </option>
+                                    <option value="segunda a sabado">
+                                      Segunda a sábado
+                                    </option>
+                                    <option value="segunda a domingo">
+                                      Segunda a domingo
+                                    </option>
+                                  </select>
+                                </div>
+                                <div className="form-field">
+                                  <label
+                                    htmlFor={`vezes_higiene_pessoal-${secao.id}`}
+                                  >
+                                    Vezes por dia (Higiene pessoal)
+                                  </label>
+                                  <input
+                                    id={`vezes_higiene_pessoal-${secao.id}`}
+                                    name="vezes_higiene_pessoal"
+                                    type="number"
+                                    min="1"
+                                    max="5"
+                                    placeholder="1-5"
+                                  />
+                                </div>
+                              </div>
+                            </div>
                           </div>
                           <div className="form-field checkbox-field">
                             <label>
@@ -3680,10 +3694,56 @@ const Home = ({ isEditMode = false }) => {
                               />
                               Higiene habitacional
                             </label>
+                            <div
+                              id={`wrap-higiene_habitacional-${secao.id}`}
+                              style={{ display: "none" }}
+                              className="service-config"
+                            >
+                              <div className="form-row">
+                                <div className="form-field">
+                                  <label
+                                    htmlFor={`periodicidade_higiene_habitacional-${secao.id}`}
+                                  >
+                                    Periodicidade (Higiene habitacional)
+                                  </label>
+                                  <select
+                                    id={`periodicidade_higiene_habitacional-${secao.id}`}
+                                    name="periodicidade_higiene_habitacional"
+                                    defaultValue=""
+                                  >
+                                    <option value="">Selecione</option>
+                                    <option value="segunda a sexta">
+                                      Segunda a sexta
+                                    </option>
+                                    <option value="segunda a sabado">
+                                      Segunda a sábado
+                                    </option>
+                                    <option value="segunda a domingo">
+                                      Segunda a domingo
+                                    </option>
+                                  </select>
+                                </div>
+                                <div className="form-field">
+                                  <label
+                                    htmlFor={`vezes_higiene_habitacional-${secao.id}`}
+                                  >
+                                    Vezes por dia (Higiene habitacional)
+                                  </label>
+                                  <input
+                                    id={`vezes_higiene_habitacional-${secao.id}`}
+                                    name="vezes_higiene_habitacional"
+                                    type="number"
+                                    min="1"
+                                    max="5"
+                                    placeholder="1-5"
+                                  />
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row checkbox-row">
                           <div className="form-field checkbox-field">
                             <label>
                               <input
@@ -3702,6 +3762,52 @@ const Home = ({ isEditMode = false }) => {
                               />
                               Refeições
                             </label>
+                            <div
+                              id={`wrap-refeicoes-${secao.id}`}
+                              style={{ display: "none" }}
+                              className="service-config"
+                            >
+                              <div className="form-row">
+                                <div className="form-field">
+                                  <label
+                                    htmlFor={`periodicidade_refeicoes-${secao.id}`}
+                                  >
+                                    Periodicidade (Refeições)
+                                  </label>
+                                  <select
+                                    id={`periodicidade_refeicoes-${secao.id}`}
+                                    name="periodicidade_refeicoes"
+                                    defaultValue=""
+                                  >
+                                    <option value="">Selecione</option>
+                                    <option value="segunda a sexta">
+                                      Segunda a sexta
+                                    </option>
+                                    <option value="segunda a sabado">
+                                      Segunda a sábado
+                                    </option>
+                                    <option value="segunda a domingo">
+                                      Segunda a domingo
+                                    </option>
+                                  </select>
+                                </div>
+                                <div className="form-field">
+                                  <label
+                                    htmlFor={`vezes_refeicoes-${secao.id}`}
+                                  >
+                                    Vezes por dia (Refeições)
+                                  </label>
+                                  <input
+                                    id={`vezes_refeicoes-${secao.id}`}
+                                    name="vezes_refeicoes"
+                                    type="number"
+                                    min="1"
+                                    max="5"
+                                    placeholder="1-5"
+                                  />
+                                </div>
+                              </div>
+                            </div>
                           </div>
                           <div className="form-field checkbox-field">
                             <label>
@@ -3721,192 +3827,51 @@ const Home = ({ isEditMode = false }) => {
                               />
                               Tratamento de roupa
                             </label>
-                          </div>
-                        </div>
-
-                        {/* Configurações por serviço */}
-                        <div
-                          id={`wrap-higiene_pessoal-${secao.id}`}
-                          style={{ display: "none" }}
-                          className="service-config"
-                        >
-                          <div className="form-row">
-                            <div className="form-field">
-                              <label
-                                htmlFor={`periodicidade_higiene_pessoal-${secao.id}`}
-                              >
-                                Periodicidade (Higiene pessoal)
-                              </label>
-                              <select
-                                id={`periodicidade_higiene_pessoal-${secao.id}`}
-                                name="periodicidade_higiene_pessoal"
-                                defaultValue=""
-                              >
-                                <option value="">Selecione</option>
-                                <option value="segunda a sexta">
-                                  Segunda a sexta
-                                </option>
-                                <option value="segunda a sabado">
-                                  Segunda a sábado
-                                </option>
-                                <option value="segunda a domingo">
-                                  Segunda a domingo
-                                </option>
-                              </select>
-                            </div>
-                            <div className="form-field">
-                              <label
-                                htmlFor={`vezes_higiene_pessoal-${secao.id}`}
-                              >
-                                Vezes por dia (Higiene pessoal)
-                              </label>
-                              <input
-                                id={`vezes_higiene_pessoal-${secao.id}`}
-                                name="vezes_higiene_pessoal"
-                                type="number"
-                                min="1"
-                                max="5"
-                                placeholder="1-5"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div
-                          id={`wrap-higiene_habitacional-${secao.id}`}
-                          style={{ display: "none" }}
-                          className="service-config"
-                        >
-                          <div className="form-row">
-                            <div className="form-field">
-                              <label
-                                htmlFor={`periodicidade_higiene_habitacional-${secao.id}`}
-                              >
-                                Periodicidade (Higiene habitacional)
-                              </label>
-                              <select
-                                id={`periodicidade_higiene_habitacional-${secao.id}`}
-                                name="periodicidade_higiene_habitacional"
-                                defaultValue=""
-                              >
-                                <option value="">Selecione</option>
-                                <option value="segunda a sexta">
-                                  Segunda a sexta
-                                </option>
-                                <option value="segunda a sabado">
-                                  Segunda a sábado
-                                </option>
-                                <option value="segunda a domingo">
-                                  Segunda a domingo
-                                </option>
-                              </select>
-                            </div>
-                            <div className="form-field">
-                              <label
-                                htmlFor={`vezes_higiene_habitacional-${secao.id}`}
-                              >
-                                Vezes por dia (Higiene habitacional)
-                              </label>
-                              <input
-                                id={`vezes_higiene_habitacional-${secao.id}`}
-                                name="vezes_higiene_habitacional"
-                                type="number"
-                                min="1"
-                                max="5"
-                                placeholder="1-5"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div
-                          id={`wrap-refeicoes-${secao.id}`}
-                          style={{ display: "none" }}
-                          className="service-config"
-                        >
-                          <div className="form-row">
-                            <div className="form-field">
-                              <label
-                                htmlFor={`periodicidade_refeicoes-${secao.id}`}
-                              >
-                                Periodicidade (Refeições)
-                              </label>
-                              <select
-                                id={`periodicidade_refeicoes-${secao.id}`}
-                                name="periodicidade_refeicoes"
-                                defaultValue=""
-                              >
-                                <option value="">Selecione</option>
-                                <option value="segunda a sexta">
-                                  Segunda a sexta
-                                </option>
-                                <option value="segunda a sabado">
-                                  Segunda a sábado
-                                </option>
-                                <option value="segunda a domingo">
-                                  Segunda a domingo
-                                </option>
-                              </select>
-                            </div>
-                            <div className="form-field">
-                              <label htmlFor={`vezes_refeicoes-${secao.id}`}>
-                                Vezes por dia (Refeições)
-                              </label>
-                              <input
-                                id={`vezes_refeicoes-${secao.id}`}
-                                name="vezes_refeicoes"
-                                type="number"
-                                min="1"
-                                max="5"
-                                placeholder="1-5"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div
-                          id={`wrap-tratamento_roupa-${secao.id}`}
-                          style={{ display: "none" }}
-                          className="service-config"
-                        >
-                          <div className="form-row">
-                            <div className="form-field">
-                              <label
-                                htmlFor={`periodicidade_tratamento_roupa-${secao.id}`}
-                              >
-                                Periodicidade (Tratamento de roupa)
-                              </label>
-                              <select
-                                id={`periodicidade_tratamento_roupa-${secao.id}`}
-                                name="periodicidade_tratamento_roupa"
-                                defaultValue=""
-                              >
-                                <option value="">Selecione</option>
-                                <option value="segunda a sexta">
-                                  Segunda a sexta
-                                </option>
-                                <option value="segunda a sabado">
-                                  Segunda a sábado
-                                </option>
-                                <option value="segunda a domingo">
-                                  Segunda a domingo
-                                </option>
-                              </select>
-                            </div>
-                            <div className="form-field">
-                              <label
-                                htmlFor={`vezes_tratamento_roupa-${secao.id}`}
-                              >
-                                Vezes por dia (Tratamento de roupa)
-                              </label>
-                              <input
-                                id={`vezes_tratamento_roupa-${secao.id}`}
-                                name="vezes_tratamento_roupa"
-                                type="number"
-                                min="1"
-                                max="5"
-                                placeholder="1-5"
-                              />
+                            <div
+                              id={`wrap-tratamento_roupa-${secao.id}`}
+                              style={{ display: "none" }}
+                              className="service-config"
+                            >
+                              <div className="form-row">
+                                <div className="form-field">
+                                  <label
+                                    htmlFor={`periodicidade_tratamento_roupa-${secao.id}`}
+                                  >
+                                    Periodicidade (Tratamento de roupa)
+                                  </label>
+                                  <select
+                                    id={`periodicidade_tratamento_roupa-${secao.id}`}
+                                    name="periodicidade_tratamento_roupa"
+                                    defaultValue=""
+                                  >
+                                    <option value="">Selecione</option>
+                                    <option value="segunda a sexta">
+                                      Segunda a sexta
+                                    </option>
+                                    <option value="segunda a sabado">
+                                      Segunda a sábado
+                                    </option>
+                                    <option value="segunda a domingo">
+                                      Segunda a domingo
+                                    </option>
+                                  </select>
+                                </div>
+                                <div className="form-field">
+                                  <label
+                                    htmlFor={`vezes_tratamento_roupa-${secao.id}`}
+                                  >
+                                    Vezes por dia (Tratamento de roupa)
+                                  </label>
+                                  <input
+                                    id={`vezes_tratamento_roupa-${secao.id}`}
+                                    name="vezes_tratamento_roupa"
+                                    type="number"
+                                    min="1"
+                                    max="5"
+                                    placeholder="1-5"
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
