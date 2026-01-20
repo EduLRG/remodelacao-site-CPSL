@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
-import { AuthContext } from "../contexts/AuthContext";
 import "../styles/Messages.css";
 
 const Messages = () => {
