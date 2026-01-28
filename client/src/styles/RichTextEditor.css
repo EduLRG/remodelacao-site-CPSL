@@ -34,6 +34,17 @@
   background: #dee2e6;
 }
 
+.toolbar-btn.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.toolbar-btn.active:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
 .toolbar-separator {
   width: 1px;
   background: #ccc;
