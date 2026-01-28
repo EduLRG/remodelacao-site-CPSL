@@ -339,6 +339,9 @@ const Home = ({ isEditMode = false }) => {
   const [selectedNews, setSelectedNews] = useState(null);
   const [selectedInstitutional, setSelectedInstitutional] = useState(null);
   const [selectedResposta, setSelectedResposta] = useState(null);
+  const [existingMedia, setExistingMedia] = useState([]);
+  const [pendingMediaFiles, setPendingMediaFiles] = useState([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
   const [confirmState, setConfirmState] = useState({
     open: false,
     message: "",
@@ -375,6 +378,361 @@ const Home = ({ isEditMode = false }) => {
       ...data,
       imagem_fundo: normalizedImage || DEFAULT_HERO.imagem_fundo,
     };
+  };
+
+  const getBaseUrl = () => api.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
+
+  const normalizeMediaUrls = (media = []) => {
+    const base = getBaseUrl();
+    return media.map((m) => ({
+      ...m,
+      url: m.url && !m.url.startsWith("http") ? `${base}${m.url}` : m.url,
+    }));
+  };
+
+  const getMediaTableForSection = (section) => {
+    if (section === "noticias") return "noticias_eventos";
+    if (section === "respostas-sociais") return "respostas_sociais";
+    if (section === "institucional" || section === "instituicao")
+      return "conteudo_institucional";
+    if (section === "secao-personalizada")
+      return "itens_secoes_personalizadas";
+    return null;
+  };
+
+  const resetPendingMedia = () => {
+    pendingMediaFiles.forEach((item) => {
+      if (item.preview) URL.revokeObjectURL(item.preview);
+    });
+    setPendingMediaFiles([]);
+  };
+
+  const resetMediaState = () => {
+    resetPendingMedia();
+    setExistingMedia([]);
+  };
+
+  const addPendingMediaFiles = (files) => {
+    if (!files || !files.length) return;
+    const stamp = Date.now();
+    const mapped = Array.from(files).map((file, index) => ({
+      id: `${stamp}-${index}-${file.name}`,
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setPendingMediaFiles((prev) => [...prev, ...mapped]);
+  };
+
+  const removePendingMedia = (id) => {
+    setPendingMediaFiles((prev) => {
+      const target = prev.find((item) => item.id === id);
+      if (target?.preview) URL.revokeObjectURL(target.preview);
+      return prev.filter((item) => item.id !== id);
+    });
+  };
+
+  const fetchMediaForItem = async (tabelaRef, idReferencia) => {
+    if (!tabelaRef || !idReferencia) return [];
+    try {
+      const response = await api.get("/media", {
+        params: {
+          tabela_referencia: tabelaRef,
+          id_referencia: idReferencia,
+        },
+      });
+      return normalizeMediaUrls(response.data?.data || []);
+    } catch (error) {
+      console.error("Erro ao carregar media:", error);
+      return [];
+    }
+  };
+
+  const loadExistingMediaForEdit = async (section, idReferencia) => {
+    const tabelaRef = getMediaTableForSection(section);
+    if (!tabelaRef || !idReferencia) {
+      setExistingMedia([]);
+      return;
+    }
+    try {
+      setMediaLoading(true);
+      const media = await fetchMediaForItem(tabelaRef, idReferencia);
+      setExistingMedia(media);
+    } finally {
+      setMediaLoading(false);
+    }
+  };
+
+  const removeExistingMedia = async (mediaId) => {
+    try {
+      await api.delete(`/media/${mediaId}`);
+      setExistingMedia((prev) => prev.filter((item) => item.id !== mediaId));
+    } catch (error) {
+      console.error("Erro ao remover media:", error);
+      alert("Erro ao remover fotografia.");
+    }
+  };
+
+  const uploadPendingMediaForItem = async (tabelaRef, idReferencia) => {
+    if (!tabelaRef || !idReferencia || pendingMediaFiles.length === 0) return;
+    try {
+      const base = getBaseUrl();
+      const startOrder = existingMedia.length;
+      for (let i = 0; i < pendingMediaFiles.length; i += 1) {
+        const item = pendingMediaFiles[i];
+        const formData = new FormData();
+        formData.append("file", item.file);
+        formData.append("tabela_referencia", tabelaRef);
+        formData.append("id_referencia", idReferencia);
+        formData.append("ordem", startOrder + i);
+
+        const response = await api.post("/media", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        let url = response.data?.data?.url;
+        if (url && !url.startsWith("http")) url = `${base}${url}`;
+        if (url) {
+          setExistingMedia((prev) => [
+            ...prev,
+            { id: response.data?.data?.id, url, tipo: "imagem" },
+          ]);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao enviar fotografias:", error);
+      alert("Erro ao enviar fotografias.");
+    } finally {
+      resetPendingMedia();
+    }
+  };
+
+  const refreshItemMedia = async (section, idReferencia, secaoId = null) => {
+    const tabelaRef = getMediaTableForSection(section);
+    if (!tabelaRef || !idReferencia) return;
+    const media = await fetchMediaForItem(tabelaRef, idReferencia);
+    if (section === "noticias") {
+      setNoticias((prev) =>
+        prev.map((item) =>
+          item.id === idReferencia ? { ...item, media } : item,
+        ),
+      );
+    } else if (section === "respostas-sociais") {
+      setRespostasSociais((prev) =>
+        prev.map((item) =>
+          item.id === idReferencia ? { ...item, media } : item,
+        ),
+      );
+    } else if (section === "institucional" || section === "instituicao") {
+      setConteudoInstitucional((prev) =>
+        prev.map((item) =>
+          item.id === idReferencia ? { ...item, media } : item,
+        ),
+      );
+    } else if (section === "secao-personalizada" && secaoId) {
+      setItensSecoesPersonalizadas((prev) => ({
+        ...prev,
+        [secaoId]: (prev[secaoId] || []).map((item) =>
+          item.id === idReferencia ? { ...item, media } : item,
+        ),
+      }));
+    }
+  };
+
+  const buildCarouselImages = (primaryUrl, media = []) => {
+    const urls = [];
+    media.forEach((m) => {
+      const isImage =
+        !m.tipo ||
+        m.tipo === "imagem" ||
+        (m.mime_type && m.mime_type.startsWith("image/"));
+      if (isImage && m.url && m.url !== primaryUrl) urls.push(m.url);
+    });
+    return Array.from(new Set(urls));
+  };
+
+  const buildGalleryImages = (primaryUrl, media = []) => {
+    const urls = [];
+    media.forEach((m) => {
+      const isImage =
+        !m.tipo ||
+        m.tipo === "imagem" ||
+        (m.mime_type && m.mime_type.startsWith("image/"));
+      if (isImage && m.url && m.url !== primaryUrl) urls.push(m.url);
+    });
+    return Array.from(new Set(urls));
+  };
+
+  const ImageCarousel = ({ images = [], altPrefix = "Imagem" }) => {
+    const [index, setIndex] = useState(0);
+
+    useEffect(() => {
+      setIndex(0);
+    }, [images]);
+
+    if (!images.length) return null;
+
+    const goPrev = () =>
+      setIndex((prev) => (prev - 1 + images.length) % images.length);
+    const goNext = () => setIndex((prev) => (prev + 1) % images.length);
+
+    return (
+      <div className="image-carousel">
+        <div className="carousel-main">
+          <img
+            src={images[index]}
+            alt={`${altPrefix} ${index + 1}`}
+            className="carousel-image"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = PLACEHOLDER_SVG;
+            }}
+          />
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="carousel-control prev"
+                onClick={goPrev}
+                aria-label="Fotografia anterior"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                className="carousel-control next"
+                onClick={goNext}
+                aria-label="Próxima fotografia"
+              >
+                ›
+              </button>
+            </>
+          )}
+        </div>
+        {images.length > 1 && (
+          <div className="carousel-thumbs">
+            {images.map((src, idx) => (
+              <button
+                key={`${src}-${idx}`}
+                type="button"
+                className={`carousel-thumb-btn ${
+                  idx === index ? "active" : ""
+                }`}
+                onClick={() => setIndex(idx)}
+                aria-label={`Fotografia ${idx + 1}`}
+              >
+                <img
+                  src={src}
+                  alt={`${altPrefix} ${idx + 1}`}
+                  className="carousel-thumb"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = PLACEHOLDER_SVG;
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const InlineGallery = ({ images = [], altPrefix = "Imagem" }) => {
+    if (!images.length) return null;
+    return (
+      <div className="inline-gallery">
+        {images.map((src, idx) => (
+          <img
+            key={`${src}-${idx}`}
+            src={src}
+            alt={`${altPrefix} ${idx + 1}`}
+            className="inline-gallery-image"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = PLACEHOLDER_SVG;
+            }}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const isImageMedia = (m) =>
+    !m?.tipo || m.tipo === "imagem" || m.mime_type?.startsWith("image/");
+
+  const renderMediaPicker = () => {
+    const tabelaRef = getMediaTableForSection(editingSection);
+    if (!tabelaRef) return null;
+
+    const imageMedia = existingMedia.filter(isImageMedia);
+
+    return (
+      <div className="media-picker">
+        <label>
+          <strong>Galeria de Fotografias:</strong>
+          <span className="file-button">
+            Escolher ficheiros
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="file-input-hidden"
+              onChange={(e) => {
+                addPendingMediaFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </span>
+          <small className="hint">Pode selecionar varias imagens</small>
+        </label>
+
+        {mediaLoading && <small>A carregar fotografias...</small>}
+
+        {(imageMedia.length > 0 || pendingMediaFiles.length > 0) && (
+          <div className="media-preview-grid">
+            {imageMedia.map((item) => (
+              <div key={`existing-${item.id}`} className="media-preview-item">
+                <img
+                  src={item.url}
+                  alt={item.nome || "Imagem"}
+                  className="media-preview-image"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = PLACEHOLDER_SVG;
+                  }}
+                />
+                {item.id && (
+                  <button
+                    type="button"
+                    className="media-remove-btn"
+                    onClick={() => removeExistingMedia(item.id)}
+                    title="Remover"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            {pendingMediaFiles.map((item) => (
+              <div key={item.id} className="media-preview-item pending">
+                <img
+                  src={item.preview}
+                  alt="Pré-visualização"
+                  className="media-preview-image"
+                />
+                <button
+                  type="button"
+                  className="media-remove-btn"
+                  onClick={() => removePendingMedia(item.id)}
+                  title="Remover"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Upload cover image (imagem_destaque) and set editingData.imagem_destaque
@@ -529,7 +887,21 @@ const Home = ({ isEditMode = false }) => {
         setLoadingContent(true);
         const response = await api.get("/conteudo");
         if (response.data.success) {
-          setConteudoInstitucional(response.data.data || []);
+          const base = getBaseUrl();
+          const normalized = (response.data.data || []).map((item) => ({
+            ...item,
+            imagem:
+              item.imagem && !item.imagem.startsWith("http")
+                ? `${base}${item.imagem}`
+                : item.imagem,
+          }));
+          const withMedia = await Promise.all(
+            normalized.map(async (item) => ({
+              ...item,
+              media: await fetchMediaForItem("conteudo_institucional", item.id),
+            })),
+          );
+          setConteudoInstitucional(withMedia);
         }
       } catch (error) {
         console.error("Erro ao carregar conteúdo:", error);
@@ -548,7 +920,21 @@ const Home = ({ isEditMode = false }) => {
         setLoadingRespostas(true);
         const response = await api.get("/respostas-sociais");
         if (response.data.success) {
-          setRespostasSociais(response.data.data || []);
+          const base = getBaseUrl();
+          const normalized = (response.data.data || []).map((item) => ({
+            ...item,
+            imagem_destaque:
+              item.imagem_destaque && !item.imagem_destaque.startsWith("http")
+                ? `${base}${item.imagem_destaque}`
+                : item.imagem_destaque,
+          }));
+          const withMedia = await Promise.all(
+            normalized.map(async (item) => ({
+              ...item,
+              media: await fetchMediaForItem("respostas_sociais", item.id),
+            })),
+          );
+          setRespostasSociais(withMedia);
         }
       } catch (error) {
         console.error("Erro ao carregar respostas sociais:", error);
@@ -567,7 +953,7 @@ const Home = ({ isEditMode = false }) => {
         setLoadingNoticias(true);
         const response = await api.get("/noticias");
         if (response.data.success) {
-          const base = api.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
+          const base = getBaseUrl();
           const normalized = (response.data.data || []).map((n) => {
             const obj = { ...n };
             if (
@@ -576,18 +962,15 @@ const Home = ({ isEditMode = false }) => {
             ) {
               obj.imagem_destaque = `${base}${obj.imagem_destaque}`;
             }
-            if (Array.isArray(obj.media)) {
-              obj.media = obj.media.map((m) => ({
-                ...m,
-                url:
-                  m.url && !m.url.startsWith("http")
-                    ? `${base}${m.url}`
-                    : m.url,
-              }));
-            }
             return obj;
           });
-          setNoticias(normalized);
+          const withMedia = await Promise.all(
+            normalized.map(async (item) => ({
+              ...item,
+              media: await fetchMediaForItem("noticias_eventos", item.id),
+            })),
+          );
+          setNoticias(withMedia);
         }
       } catch (error) {
         console.error("Erro ao carregar notícias:", error);
@@ -606,6 +989,7 @@ const Home = ({ isEditMode = false }) => {
         setLoadingSecoes(true);
         const response = await api.get("/secoes-personalizadas");
         if (response.data.success) {
+          const base = getBaseUrl();
           const secoes = (response.data.data || []).map((s) => ({
             ...s,
             config_formulario: parseFormConfig(s.config_formulario),
@@ -619,7 +1003,22 @@ const Home = ({ isEditMode = false }) => {
               `/secoes-personalizadas/${secao.id}/itens`,
             );
             if (itensResp.data.success) {
-              itensMap[secao.id] = itensResp.data.data || [];
+              const normalized = (itensResp.data.data || []).map((item) => ({
+                ...item,
+                imagem:
+                  item.imagem && !item.imagem.startsWith("http")
+                    ? `${base}${item.imagem}`
+                    : item.imagem,
+              }));
+              itensMap[secao.id] = await Promise.all(
+                normalized.map(async (item) => ({
+                  ...item,
+                  media: await fetchMediaForItem(
+                    "itens_secoes_personalizadas",
+                    item.id,
+                  ),
+                })),
+              );
             }
           }
           setItensSecoesPersonalizadas(itensMap);
@@ -650,13 +1049,14 @@ const Home = ({ isEditMode = false }) => {
   }, [secoesPersonalizadas]);
 
   // Abrir modal de edição
-  const handleEdit = (
+  const handleEdit = async (
     section,
     data = {},
     id = null,
     secaoPersonalizadaData = null,
   ) => {
     lastFocusedRef.current = document.activeElement;
+    resetMediaState();
     setEditingSection(section);
     setEditingData(data);
     setEditingId(id);
@@ -664,6 +1064,9 @@ const Home = ({ isEditMode = false }) => {
       setEditingSecaoPersonalizada(secaoPersonalizadaData);
     }
     setShowEditModal(true);
+    if (id) {
+      await loadExistingMediaForEdit(section, id);
+    }
   };
 
   // Adicionar nova subseção
@@ -673,6 +1076,7 @@ const Home = ({ isEditMode = false }) => {
   ) => {
     lastFocusedRef.current = document.activeElement;
     console.log("handleAddSubsection - section:", section);
+    resetMediaState();
     setEditingSection(section);
 
     if (secaoPersonalizadaData) {
@@ -823,6 +1227,10 @@ const Home = ({ isEditMode = false }) => {
     try {
       let response;
 
+      let createdId = null;
+      let mediaSection = editingSection;
+      const secaoIdForMedia = editingSecaoPersonalizada?.id || null;
+
       if (editingSecaoPersonalizada) {
         // Criar item de seção personalizada
         response = await api.post(
@@ -830,6 +1238,8 @@ const Home = ({ isEditMode = false }) => {
           editingData,
         );
         if (response.data.success) {
+          createdId = response.data.data?.id || null;
+          mediaSection = "secao-personalizada";
           // Atualizar lista de itens da seção
           setItensSecoesPersonalizadas({
             ...itensSecoesPersonalizadas,
@@ -844,6 +1254,7 @@ const Home = ({ isEditMode = false }) => {
       } else if (editingSection === "respostas-sociais") {
         response = await api.post("/respostas-sociais", editingData);
         if (response.data.success) {
+          createdId = response.data.data?.id || null;
           setRespostasSociais([...respostasSociais, response.data.data]);
         }
       } else if (editingSection === "noticias") {
@@ -852,6 +1263,7 @@ const Home = ({ isEditMode = false }) => {
           publicado: true,
         });
         if (response.data.success) {
+          createdId = response.data.data?.id || null;
           setNoticias([...noticias, response.data.data]);
         }
       } else {
@@ -859,11 +1271,24 @@ const Home = ({ isEditMode = false }) => {
         response = await api.post("/conteudo", editingData);
         console.log("Resposta de /conteudo:", response.data);
         if (response.data.success) {
+          createdId = response.data.data?.id || null;
           setConteudoInstitucional([
             ...conteudoInstitucional,
             response.data.data,
           ]);
         }
+      }
+
+      const tabelaRef = getMediaTableForSection(mediaSection);
+      if (tabelaRef && createdId) {
+        await uploadPendingMediaForItem(tabelaRef, createdId);
+        await refreshItemMedia(
+          mediaSection === "secao-personalizada"
+            ? "secao-personalizada"
+            : mediaSection,
+          createdId,
+          secaoIdForMedia,
+        );
       }
 
       closeAddModal();
@@ -939,10 +1364,59 @@ const Home = ({ isEditMode = false }) => {
     setShowNewsModal(true);
   };
 
-  const openCustomItem = (item) => {
+  const openCustomItem = async (item) => {
     lastFocusedRef.current = document.activeElement;
-    setSelectedCustomItem(item);
+    try {
+      const media = await fetchMediaForItem(
+        "itens_secoes_personalizadas",
+        item.id,
+      );
+      setSelectedCustomItem({ ...item, media });
+    } catch (error) {
+      console.error("Erro ao obter media do item:", error);
+      setSelectedCustomItem(item);
+    }
     setShowCustomItemModal(true);
+  };
+
+  const openInstitutional = async (item) => {
+    lastFocusedRef.current = document.activeElement;
+    try {
+      const media = await fetchMediaForItem(
+        "conteudo_institucional",
+        item.id,
+      );
+      setSelectedInstitutional({ ...item, media });
+    } catch (error) {
+      console.error("Erro ao obter media institucional:", error);
+      setSelectedInstitutional(item);
+    }
+  };
+
+  const openResposta = async (resposta) => {
+    lastFocusedRef.current = document.activeElement;
+    try {
+      const resp = await api.get(`/respostas-sociais/${resposta.id}`);
+      if (resp.data && resp.data.success) {
+        const base = getBaseUrl();
+        const data = resp.data.data || {};
+        if (
+          data.imagem_destaque &&
+          !data.imagem_destaque.startsWith("http")
+        ) {
+          data.imagem_destaque = `${base}${data.imagem_destaque}`;
+        }
+        if (Array.isArray(data.media)) {
+          data.media = normalizeMediaUrls(data.media);
+        }
+        setSelectedResposta(data);
+      } else {
+        setSelectedResposta(resposta);
+      }
+    } catch (error) {
+      console.error("Erro ao obter resposta social:", error);
+      setSelectedResposta(resposta);
+    }
   };
 
   const focusFirstElement = (ref) => {
@@ -985,6 +1459,7 @@ const Home = ({ isEditMode = false }) => {
 
   const closeEditModal = () => {
     setShowEditModal(false);
+    resetMediaState();
     if (lastFocusedRef.current) {
       lastFocusedRef.current.focus();
     }
@@ -992,6 +1467,7 @@ const Home = ({ isEditMode = false }) => {
 
   const closeAddModal = () => {
     setShowAddModal(false);
+    resetMediaState();
     if (lastFocusedRef.current) {
       lastFocusedRef.current.focus();
     }
@@ -1016,6 +1492,15 @@ const Home = ({ isEditMode = false }) => {
           `/secoes-personalizadas/${editingSecaoPersonalizada.id}/itens/${editingId}`,
           editingData,
         );
+        await uploadPendingMediaForItem(
+          getMediaTableForSection("secao-personalizada"),
+          editingId,
+        );
+        await refreshItemMedia(
+          "secao-personalizada",
+          editingId,
+          editingSecaoPersonalizada.id,
+        );
         setItensSecoesPersonalizadas({
           ...itensSecoesPersonalizadas,
           [editingSecaoPersonalizada.id]: (
@@ -1028,6 +1513,11 @@ const Home = ({ isEditMode = false }) => {
         alert("Item atualizado com sucesso!");
       } else if (editingSection === "institucional" && editingId) {
         await api.put(`/conteudo/${editingId}`, editingData);
+        await uploadPendingMediaForItem(
+          getMediaTableForSection(editingSection),
+          editingId,
+        );
+        await refreshItemMedia("institucional", editingId);
         setConteudoInstitucional(
           conteudoInstitucional.map((c) =>
             c.id === editingId ? { ...c, ...editingData } : c,
@@ -1037,6 +1527,11 @@ const Home = ({ isEditMode = false }) => {
         alert("Conteúdo atualizado com sucesso!");
       } else if (editingSection === "respostas-sociais" && editingId) {
         await api.put(`/respostas-sociais/${editingId}`, editingData);
+        await uploadPendingMediaForItem(
+          getMediaTableForSection(editingSection),
+          editingId,
+        );
+        await refreshItemMedia("respostas-sociais", editingId);
         setRespostasSociais(
           respostasSociais.map((r) =>
             r.id === editingId ? { ...r, ...editingData } : r,
@@ -1046,6 +1541,11 @@ const Home = ({ isEditMode = false }) => {
         alert("Resposta Social atualizada com sucesso!");
       } else if (editingSection === "noticias" && editingId) {
         await api.put(`/noticias/${editingId}`, editingData);
+        await uploadPendingMediaForItem(
+          getMediaTableForSection(editingSection),
+          editingId,
+        );
+        await refreshItemMedia("noticias", editingId);
         setNoticias(
           noticias.map((n) =>
             n.id === editingId ? { ...n, ...editingData } : n,
@@ -1144,7 +1644,31 @@ const Home = ({ isEditMode = false }) => {
           ) : (
             <div className="institutional-content">
               {conteudoInstitucional.map((content) => (
-                <div key={content.id} className="content-subsection">
+                <div
+                  key={content.id}
+                  className="content-subsection"
+                  onClick={() => !isEditMode && openInstitutional(content)}
+                  style={{ cursor: !isEditMode ? "pointer" : "default" }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) =>
+                    !isEditMode &&
+                    e.key === "Enter" &&
+                    openInstitutional(content)
+                  }
+                >
+                  {content.imagem && (
+                    <img
+                      src={content.imagem}
+                      alt={content.titulo}
+                      className="content-image"
+                      style={{ marginBottom: "1rem", maxWidth: "100%" }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = PLACEHOLDER_SVG;
+                      }}
+                    />
+                  )}
                   <div className="subsection-header">
                     <h3>{content.titulo}</h3>
                     {isEditMode && user && (
@@ -1182,6 +1706,13 @@ const Home = ({ isEditMode = false }) => {
                   <div
                     className="content-preview"
                     dangerouslySetInnerHTML={{ __html: content.conteudo || "" }}
+                  />
+                  <InlineGallery
+                    images={buildGalleryImages(
+                      content.imagem,
+                      content.media || [],
+                    )}
+                    altPrefix={content.titulo || "Imagem"}
                   />
                   {content.video_url && (
                     <video controls className="content-video">
@@ -1292,16 +1823,28 @@ const Home = ({ isEditMode = false }) => {
                 <div
                   key={resposta.id}
                   className="content-subsection"
-                  onClick={() => !isEditMode && setSelectedResposta(resposta)}
+                  onClick={() => !isEditMode && openResposta(resposta)}
                   style={{ cursor: !isEditMode ? "pointer" : "default" }}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) =>
                     !isEditMode &&
                     e.key === "Enter" &&
-                    setSelectedResposta(resposta)
+                    openResposta(resposta)
                   }
                 >
+                  {resposta.imagem_destaque && (
+                    <img
+                      src={resposta.imagem_destaque}
+                      alt={resposta.titulo}
+                      className="content-image"
+                      style={{ marginBottom: "1rem", maxWidth: "100%" }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = PLACEHOLDER_SVG;
+                      }}
+                    />
+                  )}
                   <div className="subsection-header">
                     <h3>{resposta.titulo}</h3>
                     {isEditMode && user && (
@@ -1333,18 +1876,6 @@ const Home = ({ isEditMode = false }) => {
                       </div>
                     )}
                   </div>
-                  {resposta.imagem_destaque && (
-                    <img
-                      src={resposta.imagem_destaque}
-                      alt={resposta.titulo}
-                      className="content-image"
-                      style={{ marginBottom: "1rem", maxWidth: "100%" }}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = PLACEHOLDER_SVG;
-                      }}
-                    />
-                  )}
                   {resposta.descricao && (
                     <p
                       className="content-summary"
@@ -1367,6 +1898,13 @@ const Home = ({ isEditMode = false }) => {
                           ? "..."
                           : ""),
                     }}
+                  />
+                  <InlineGallery
+                    images={buildGalleryImages(
+                      resposta.imagem_destaque,
+                      resposta.media || [],
+                    )}
+                    altPrefix={resposta.titulo || "Imagem"}
                   />
                 </div>
               ))}
@@ -1423,6 +1961,13 @@ const Home = ({ isEditMode = false }) => {
                       {noticia.resumo ||
                         stripHtml(noticia.conteudo || "").slice(0, 200) + "..."}
                     </p>
+                    <InlineGallery
+                      images={buildGalleryImages(
+                        noticia.imagem_destaque,
+                        noticia.media || [],
+                      )}
+                      altPrefix={noticia.titulo || "Imagem"}
+                    />
                   </div>
 
                   <p className="noticia-date">
@@ -1670,6 +2215,13 @@ const Home = ({ isEditMode = false }) => {
                           dangerouslySetInnerHTML={{ __html: item.conteudo }}
                         />
                       )}
+                      <InlineGallery
+                        images={buildGalleryImages(
+                          item.imagem,
+                          item.media || [],
+                        )}
+                        altPrefix={item.titulo || "Imagem"}
+                      />
                       {item.video_url && (
                         <video
                           controls
@@ -1783,6 +2335,18 @@ const Home = ({ isEditMode = false }) => {
                         }
                       }}
                     >
+                      {item.imagem && (
+                        <img
+                          src={item.imagem}
+                          alt={item.titulo || "Imagem"}
+                          className="content-image"
+                          style={{ marginBottom: "0.75rem", maxWidth: "100%" }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = PLACEHOLDER_SVG;
+                          }}
+                        />
+                      )}
                       <div className="list-item-header">
                         {item.titulo && <h3>{item.titulo}</h3>}
                         {isEditMode && user && (
@@ -1824,6 +2388,13 @@ const Home = ({ isEditMode = false }) => {
                           {item.subtitulo}
                         </p>
                       )}
+                      <InlineGallery
+                        images={buildGalleryImages(
+                          item.imagem,
+                          item.media || [],
+                        )}
+                        altPrefix={item.titulo || "Imagem"}
+                      />
                       <span className="list-item-more">Ver mais →</span>
                     </div>
                   ))}
@@ -1862,6 +2433,18 @@ const Home = ({ isEditMode = false }) => {
                         }
                       }}
                     >
+                      {item.imagem && (
+                        <img
+                          src={item.imagem}
+                          alt={item.titulo}
+                          className="content-image"
+                          style={{ marginBottom: "1rem", maxWidth: "100%" }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = PLACEHOLDER_SVG;
+                          }}
+                        />
+                      )}
                       <div className="subsection-header">
                         {item.titulo && <h3>{item.titulo}</h3>}
                         {isEditMode && user && (
@@ -1898,18 +2481,6 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         )}
                       </div>
-                      {item.imagem && (
-                        <img
-                          src={item.imagem}
-                          alt={item.titulo}
-                          className="content-image"
-                          style={{ marginBottom: "1rem", maxWidth: "100%" }}
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = PLACEHOLDER_SVG;
-                          }}
-                        />
-                      )}
                       {item.subtitulo && (
                         <p
                           style={{
@@ -1929,6 +2500,13 @@ const Home = ({ isEditMode = false }) => {
                           }}
                         />
                       )}
+                      <InlineGallery
+                        images={buildGalleryImages(
+                          item.imagem,
+                          item.media || [],
+                        )}
+                        altPrefix={item.titulo || "Imagem"}
+                      />
                     </div>
                   ))}
                 </div>
@@ -4246,55 +4824,75 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         )}
                         <div className="cover-actions">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const f = e.target.files[0];
-                              if (f) {
-                                try {
-                                  const formData = new FormData();
-                                  formData.append("file", f);
-                                  formData.append(
-                                    "tabela_referencia",
-                                    "conteudo_institucional",
-                                  );
-                                  const response = await api.post(
-                                    "/media",
-                                    formData,
-                                    {
-                                      headers: {
-                                        "Content-Type": "multipart/form-data",
+                          <span className="file-button">
+                            Escolher ficheiro
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="file-input-hidden"
+                              onChange={async (e) => {
+                                const f = e.target.files[0];
+                                if (f) {
+                                  try {
+                                    const formData = new FormData();
+                                    formData.append("file", f);
+                                    formData.append(
+                                      "tabela_referencia",
+                                      "conteudo_institucional",
+                                    );
+                                    const response = await api.post(
+                                      "/media",
+                                      formData,
+                                      {
+                                        headers: {
+                                          "Content-Type": "multipart/form-data",
+                                        },
                                       },
-                                    },
-                                  );
-                                  let url = response.data?.data?.url;
-                                  if (url) {
-                                    const base =
-                                      api.defaults.baseURL?.replace(
-                                        /\/api\/?$/,
-                                        "",
-                                      ) || "";
-                                    url = url.startsWith("http")
-                                      ? url
-                                      : `${base}${url}`;
-                                    setEditingData((d) => ({
-                                      ...d,
-                                      imagem: url,
-                                    }));
+                                    );
+                                    let url = response.data?.data?.url;
+                                    if (url) {
+                                      const base =
+                                        api.defaults.baseURL?.replace(
+                                          /\/api\/?$/,
+                                          "",
+                                        ) || "";
+                                      url = url.startsWith("http")
+                                        ? url
+                                        : `${base}${url}`;
+                                      setEditingData((d) => ({
+                                        ...d,
+                                        imagem: url,
+                                      }));
+                                    }
+                                  } catch (err) {
+                                    console.error("Erro ao enviar imagem:", err);
+                                    alert("Erro ao enviar imagem.");
                                   }
-                                } catch (err) {
-                                  console.error("Erro ao enviar imagem:", err);
-                                  alert("Erro ao enviar imagem.");
                                 }
-                              }
-                            }}
-                          />
+                                e.target.value = "";
+                              }}
+                            />
+                          </span>
                           <small className="hint">Enviar imagem de capa</small>
+                          {editingData.imagem && (
+                            <button
+                              type="button"
+                              className="btn-remove-image"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setEditingData({ ...editingData, imagem: "" });
+                              }}
+                              title="Remover imagem"
+                            >
+                              Remover imagem
+                            </button>
+                          )}
                         </div>
                       </div>
                     </label>
                   </div>
+                  {renderMediaPicker()}
                   <label>
                     <strong>Título:</strong>
                     <input
@@ -4357,63 +4955,70 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         )}
                         <div className="cover-actions">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const f = e.target.files[0];
-                              if (f) {
-                                try {
-                                  const formData = new FormData();
-                                  formData.append("file", f);
-                                  formData.append(
-                                    "tabela_referencia",
-                                    "cpsl_intro",
-                                  );
-                                  formData.append("id_referencia", 1);
-                                  const response = await api.post(
-                                    "/media",
-                                    formData,
-                                    {
-                                      headers: {
-                                        "Content-Type": "multipart/form-data",
+                          <span className="file-button">
+                            Escolher ficheiro
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="file-input-hidden"
+                              onChange={async (e) => {
+                                const f = e.target.files[0];
+                                if (f) {
+                                  try {
+                                    const formData = new FormData();
+                                    formData.append("file", f);
+                                    formData.append(
+                                      "tabela_referencia",
+                                      "cpsl_intro",
+                                    );
+                                    formData.append("id_referencia", 1);
+                                    const response = await api.post(
+                                      "/media",
+                                      formData,
+                                      {
+                                        headers: {
+                                          "Content-Type": "multipart/form-data",
+                                        },
                                       },
-                                    },
-                                  );
-                                  let url = response.data?.data?.url;
-                                  if (!url)
-                                    throw new Error("Upload não retornou URL");
-                                  const base =
-                                    api.defaults.baseURL?.replace(
-                                      /\/api\/?$/,
-                                      "",
-                                    ) || "";
-                                  url = url.startsWith("http")
-                                    ? url
-                                    : `${base}${url}`;
-                                  setEditingData({
-                                    ...editingData,
-                                    imagem_fundo: url,
-                                  });
-                                } catch (err) {
-                                  console.error("Erro ao enviar imagem:", err);
-                                  alert("Erro ao enviar imagem.");
+                                    );
+                                    let url = response.data?.data?.url;
+                                    if (!url)
+                                      throw new Error("Upload não retornou URL");
+                                    const base =
+                                      api.defaults.baseURL?.replace(
+                                        /\/api\/?$/,
+                                        "",
+                                      ) || "";
+                                    url = url.startsWith("http")
+                                      ? url
+                                      : `${base}${url}`;
+                                    setEditingData({
+                                      ...editingData,
+                                      imagem_fundo: url,
+                                    });
+                                  } catch (err) {
+                                    console.error("Erro ao enviar imagem:", err);
+                                    alert("Erro ao enviar imagem.");
+                                  }
                                 }
-                              }
-                            }}
-                          />
+                                e.target.value = "";
+                              }}
+                            />
+                          </span>
                           <small className="hint">
                             Enviar imagem de fundo (recomendado: 1920x1080px)
                           </small>
                           {editingData.imagem_fundo && (
                             <button
                               type="button"
-                              onClick={() =>
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 setEditingData({
                                   ...editingData,
                                   imagem_fundo: "",
-                                })
-                              }
+                                });
+                              }}
                               className="btn-remove-image"
                             >
                               Remover imagem
@@ -4496,19 +5101,42 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         )}
                         <div className="cover-actions">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const f = e.target.files[0];
-                              if (f) await uploadCoverImage(f);
-                            }}
-                          />
+                          <span className="file-button">
+                            Escolher ficheiro
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="file-input-hidden"
+                              onChange={async (e) => {
+                                const f = e.target.files[0];
+                                if (f) await uploadCoverImage(f);
+                                e.target.value = "";
+                              }}
+                            />
+                          </span>
                           <small className="hint">Enviar imagem de capa</small>
+                          {editingData.imagem_destaque && (
+                            <button
+                              type="button"
+                              className="btn-remove-image"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setEditingData({
+                                  ...editingData,
+                                  imagem_destaque: "",
+                                });
+                              }}
+                              title="Remover imagem"
+                            >
+                              Remover imagem
+                            </button>
+                          )}
                         </div>
                       </div>
                     </label>
                   </div>
+                  {renderMediaPicker()}
 
                   <label>
                     <strong>Título:</strong>
@@ -4589,22 +5217,29 @@ const Home = ({ isEditMode = false }) => {
                           </div>
                         )}
                         <div className="cover-actions">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const f = e.target.files[0];
-                              if (f) await uploadCoverImage(f);
-                            }}
-                          />
+                          <span className="file-button">
+                            Escolher ficheiro
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="file-input-hidden"
+                              onChange={async (e) => {
+                                const f = e.target.files[0];
+                                if (f) await uploadCoverImage(f);
+                                e.target.value = "";
+                              }}
+                            />
+                          </span>
                           <small className="hint">Enviar imagem</small>
                           {editingData.imagem && (
                             <button
                               type="button"
                               className="btn-remove-image"
-                              onClick={() =>
-                                setEditingData({ ...editingData, imagem: "" })
-                              }
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setEditingData({ ...editingData, imagem: "" });
+                              }}
                               title="Remover imagem"
                             >
                               🗑️ Remover
@@ -4614,6 +5249,7 @@ const Home = ({ isEditMode = false }) => {
                       </div>
                     </label>
                   </div>
+                  {renderMediaPicker()}
 
                   <label>
                     <strong>Título:</strong>
@@ -4792,31 +5428,18 @@ const Home = ({ isEditMode = false }) => {
                 }}
               />
 
-              {/* Imagens adicionais associadas (media) */}
-              {selectedNews.media && selectedNews.media.length > 0 && (
-                <div className="noticia-media-gallery">
-                  {selectedNews.media
-                    .filter(
-                      (m) =>
-                        m.url !== selectedNews.imagem_destaque &&
-                        (!m.tipo || m.tipo.includes("imagem")),
-                    )
-                    .map((m) => (
-                      <img
-                        key={m.id || m.url}
-                        src={m.url}
-                        alt={m.titulo || "imagem"}
-                        className="noticia-additional-image"
-                        onError={(e) => {
-                          console.warn(
-                            "Imagem adicional não encontrada:",
-                            e.target.src,
-                          );
-                          e.target.src = PLACEHOLDER_SVG;
-                        }}
-                      />
-                    ))}
-                </div>
+              {/* Galeria */}
+              {buildCarouselImages(
+                selectedNews.imagem_destaque,
+                selectedNews.media || [],
+              ).length > 0 && (
+                <ImageCarousel
+                  images={buildCarouselImages(
+                    selectedNews.imagem_destaque,
+                    selectedNews.media || [],
+                  )}
+                  altPrefix={selectedNews.titulo || "Notícia"}
+                />
               )}
             </div>
             <div
@@ -4906,6 +5529,18 @@ const Home = ({ isEditMode = false }) => {
                   }}
                 />
               )}
+              {buildCarouselImages(
+                selectedCustomItem.imagem,
+                selectedCustomItem.media || [],
+              ).length > 0 && (
+                <ImageCarousel
+                  images={buildCarouselImages(
+                    selectedCustomItem.imagem,
+                    selectedCustomItem.media || [],
+                  )}
+                  altPrefix={selectedCustomItem.titulo || "Imagem"}
+                />
+              )}
 
               {selectedCustomItem.video_url && (
                 <video
@@ -4982,6 +5617,18 @@ const Home = ({ isEditMode = false }) => {
                   __html: selectedInstitutional.conteudo || "",
                 }}
               />
+              {buildCarouselImages(
+                selectedInstitutional.imagem,
+                selectedInstitutional.media || [],
+              ).length > 0 && (
+                <ImageCarousel
+                  images={buildCarouselImages(
+                    selectedInstitutional.imagem,
+                    selectedInstitutional.media || [],
+                  )}
+                  altPrefix={selectedInstitutional.titulo || "Imagem"}
+                />
+              )}
               {selectedInstitutional.video_url && (
                 <video
                   controls
@@ -5042,6 +5689,18 @@ const Home = ({ isEditMode = false }) => {
                     "",
                 }}
               />
+              {buildCarouselImages(
+                selectedResposta.imagem_destaque,
+                selectedResposta.media || [],
+              ).length > 0 && (
+                <ImageCarousel
+                  images={buildCarouselImages(
+                    selectedResposta.imagem_destaque,
+                    selectedResposta.media || [],
+                  )}
+                  altPrefix={selectedResposta.titulo || "Imagem"}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -5102,22 +5761,54 @@ const Home = ({ isEditMode = false }) => {
                             </div>
                           )}
                           <div className="cover-actions">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={async (e) => {
-                                const f = e.target.files[0];
-                                if (f) await uploadCoverImage(f);
+                            <span className="file-button">
+                              Escolher ficheiro
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="file-input-hidden"
+                                onChange={async (e) => {
+                                  const f = e.target.files[0];
+                                  if (f) await uploadCoverImage(f);
+                                  e.target.value = "";
+                                }}
+                              />
+                            </span>
+                          <small className="hint">
+                            Enviar imagem de capa (aparece antes do título)
+                          </small>
+                          {(editingSecaoPersonalizada
+                            ? editingData.imagem
+                            : editingData.imagem_destaque) && (
+                            <button
+                              type="button"
+                              className="btn-remove-image"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (editingSecaoPersonalizada) {
+                                  setEditingData({
+                                    ...editingData,
+                                    imagem: "",
+                                  });
+                                } else {
+                                  setEditingData({
+                                    ...editingData,
+                                    imagem_destaque: "",
+                                  });
+                                }
                               }}
-                            />
-                            <small className="hint">
-                              Enviar imagem de capa (aparece antes do título)
-                            </small>
-                          </div>
+                              title="Remover imagem"
+                            >
+                              Remover imagem
+                            </button>
+                          )}
                         </div>
-                      </label>
-                    </div>
-                  )}
+                      </div>
+                    </label>
+                  </div>
+                )}
+                {renderMediaPicker()}
 
                 <label>
                   <strong>Título:</strong>
