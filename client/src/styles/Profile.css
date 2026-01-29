@@ -55,6 +55,7 @@
   margin-bottom: 1.25rem;
   font-size: 1rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .profile-item:last-child {
@@ -65,10 +66,17 @@
   color: #475569;
   min-width: 120px;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .profile-item span {
   color: #334155;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+  flex: 1;
+  min-width: 0;
 }
 
 .badge {
@@ -367,9 +375,51 @@
 
 /* Responsivo */
 @media (max-width: 768px) {
+  .profile-page {
+    padding: 1rem;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .profile-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .profile-actions button {
+    width: 100%;
+  }
+
   .profile-info,
   .accounts-management {
     padding: 20px;
+  }
+
+  .profile-card {
+    padding: 1.5rem;
+  }
+
+  .profile-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .profile-item strong {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .profile-item span {
+    width: 100%;
+    padding-left: 0;
   }
 
   .section-header {
