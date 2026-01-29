@@ -40,8 +40,10 @@ const formatDate = (dateStr) => {
 };
 
 // Editor simples baseado em contentEditable (compatível com React 19+)
-function RichTextEditor({ value, onChange, api }) {
+function RichTextEditor({ value, onChange }) {
   const editorRef = useRef(null);
+  const savedRangeRef = useRef(null);
+  const [defaultFontLabel, setDefaultFontLabel] = useState("Tipo de letra");
   const [formats, setFormats] = useState({
     bold: false,
     italic: false,
@@ -49,29 +51,62 @@ function RichTextEditor({ value, onChange, api }) {
     list: false,
   });
 
-  // Upload de imagem para /api/media e retorna URL absoluto
-  const uploadImage = async (file) => {
+  const saveSelection = () => {
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("tabela_referencia", "noticias_eventos");
+      const sel = document.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
 
-      const response = await api.post("/media", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const url = response.data?.data?.url;
-      if (!url) throw new Error("Upload não retornou URL");
-      const base = api.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
-      return url.startsWith("http") ? url : `${base}${url}`;
+  const restoreSelection = () => {
+    try {
+      const sel = document.getSelection();
+      if (sel && savedRangeRef.current) {
+        sel.removeAllRanges();
+        sel.addRange(savedRangeRef.current);
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const syncFormats = () => {
+    try {
+      const sel = document.getSelection();
+      let bold = false;
+      let italic = false;
+      let underline = false;
+      let list = false;
+      if (sel && sel.rangeCount > 0) {
+        try {
+          bold = document.queryCommandState("bold");
+          italic = document.queryCommandState("italic");
+          underline = document.queryCommandState("underline");
+          list = document.queryCommandState("insertUnorderedList");
+        } catch (e) {
+          const node = sel.anchorNode;
+          const el = node && node.nodeType === 3 ? node.parentElement : node;
+          if (el) {
+            bold = !!el.closest && !!el.closest("strong, b");
+            italic = !!el.closest && !!el.closest("em, i");
+            underline = !!el.closest && !!el.closest("u");
+            list = !!el.closest && !!el.closest("ul, ol");
+          }
+        }
+      }
+      setFormats({ bold, italic, underline, list });
     } catch (err) {
-      console.error("Erro ao enviar imagem:", err);
-      toast.error("Erro ao enviar imagem.");
-      return null;
+      // ignore
     }
   };
 
   const exec = (command, value = null) => {
     // execCommand ainda funciona na maioria dos browsers para operações simples
+    restoreSelection();
     document.execCommand(command, false, value);
     // atualizar estado
     onChange(editorRef.current.innerHTML);
@@ -81,39 +116,10 @@ function RichTextEditor({ value, onChange, api }) {
     } catch (e) {
       // ignore
     }
-    // update our internal formats state only when user clicked toolbar
-    if (command === "bold") setFormats((p) => ({ ...p, bold: !p.bold }));
-    if (command === "italic") setFormats((p) => ({ ...p, italic: !p.italic }));
-    if (command === "underline")
-      setFormats((p) => ({ ...p, underline: !p.underline }));
-    if (command === "insertUnorderedList")
-      setFormats((p) => ({ ...p, list: !p.list }));
+    syncFormats();
   };
 
   // Formats are updated only when the toolbar buttons are clicked (see exec()).
-
-  const handleInsertLink = () => {
-    const url = window.prompt("URL (inclui https://)");
-    if (url) exec("createLink", url);
-  };
-
-  const handleImagePick = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.onchange = async () => {
-      const file = input.files[0];
-      if (!file) return;
-      const url = await uploadImage(file);
-      if (url) {
-        // inserir imagem como HTML
-        const imgHtml = `<img src="${url}" alt="image" style="max-width:100%;"/>`;
-        document.execCommand("insertHTML", false, imgHtml);
-        onChange(editorRef.current.innerHTML);
-      }
-    };
-    input.click();
-  };
 
   useEffect(() => {
     if (editorRef.current) {
@@ -131,9 +137,48 @@ function RichTextEditor({ value, onChange, api }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!editorRef.current || typeof window === "undefined") return;
+    try {
+      const fontFamily = window.getComputedStyle(editorRef.current).fontFamily;
+      const first =
+        fontFamily?.split(",")[0]?.replace(/['"]/g, "").trim() || "";
+      if (first) setDefaultFontLabel(first);
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
   return (
     <div className="richtext-editor">
       <div className="rt-toolbar">
+        <select
+          onChange={(e) => {
+            if (e.target.value === "__default") return;
+            exec("fontName", e.target.value);
+          }}
+          defaultValue="__default"
+          aria-label="Tipo de letra"
+        >
+          <option value="__default">{defaultFontLabel}</option>
+          <option value="Arial">Arial</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Tahoma">Tahoma</option>
+          <option value="Trebuchet MS">Trebuchet MS</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Courier New">Courier New</option>
+        </select>
+        <select
+          onChange={(e) => exec("fontSize", e.target.value)}
+          defaultValue=""
+          aria-label="Tamanho da fonte"
+        >
+          <option value="">Tamanho</option>
+          <option value="2">Pequeno</option>
+          <option value="3">Normal</option>
+          <option value="4">Grande</option>
+        </select>
         <button
           type="button"
           onMouseDown={(e) => e.preventDefault()}
@@ -170,75 +215,27 @@ function RichTextEditor({ value, onChange, api }) {
         >
           • Lista
         </button>
-        <button
-          type="button"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={handleInsertLink}
-          title="Adicionar hiperligação"
-          className="rt-btn rt-btn-link"
-        >
-          + adicionar hiperligacao
-        </button>
-        <button
-          type="button"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={handleImagePick}
-          title="Adicionar fotografia"
-          className="rt-btn rt-btn-image"
-        >
-          🖼️
-        </button>
-        <select
-          onChange={(e) => exec("fontSize", e.target.value)}
-          defaultValue=""
-          aria-label="Tamanho da fonte"
-        >
-          <option value="">Tamanho</option>
-          <option value="1">Pequeno</option>
-          <option value="3">Normal</option>
-          <option value="5">Grande</option>
-        </select>
       </div>
       <div
         ref={editorRef}
         contentEditable
         className="rt-editor-area"
-        onInput={(e) => onChange(e.currentTarget.innerHTML)}
-        onDoubleClick={(e) =>
-          e.preventDefault()
-        } /* prevent double-click from triggering format toggles */
+        onInput={(e) => {
+          onChange(e.currentTarget.innerHTML);
+          saveSelection();
+        }}
+        onDoubleClick={(e) => e.stopPropagation()}
         onFocus={() => {
-          // compute real format state at caret/selection and sync toolbar icons
-          try {
-            const sel = document.getSelection();
-            let bold = false;
-            let italic = false;
-            let underline = false;
-            let list = false;
-            if (sel && sel.rangeCount > 0) {
-              // prefer queryCommandState if available
-              try {
-                bold = document.queryCommandState("bold");
-                italic = document.queryCommandState("italic");
-                underline = document.queryCommandState("underline");
-                list = document.queryCommandState("insertUnorderedList");
-              } catch (e) {
-                // fallback: inspect ancestor nodes
-                const node = sel.anchorNode;
-                const el =
-                  node && node.nodeType === 3 ? node.parentElement : node;
-                if (el) {
-                  bold = !!el.closest && !!el.closest("strong, b");
-                  italic = !!el.closest && !!el.closest("em, i");
-                  underline = !!el.closest && !!el.closest("u");
-                  list = !!el.closest && !!el.closest("ul, ol");
-                }
-              }
-            }
-            setFormats({ bold, italic, underline, list });
-          } catch (err) {
-            // ignore
-          }
+          saveSelection();
+          syncFormats();
+        }}
+        onMouseUp={() => {
+          saveSelection();
+          syncFormats();
+        }}
+        onKeyUp={() => {
+          saveSelection();
+          syncFormats();
         }}
         style={{ minHeight: 150, border: "1px solid #ddd", padding: 8 }}
       />
@@ -4924,16 +4921,15 @@ const Home = ({ isEditMode = false }) => {
                       placeholder="Descrição breve"
                     />
                   </label>
-                  <label>
+                  <div className="field">
                     <strong>Conteúdo:</strong>
                     <RichTextEditor
                       value={editingData.conteudo || ""}
                       onChange={(value) =>
                         setEditingData({ ...editingData, conteudo: value })
                       }
-                      api={api}
                     />
-                  </label>
+                  </div>
                 </>
               )}
 
@@ -5191,16 +5187,15 @@ const Home = ({ isEditMode = false }) => {
                     />
                   </label>
 
-                  <label>
+                  <div className="field">
                     <strong>Conteúdo:</strong>
                     <RichTextEditor
                       value={editingData.conteudo || ""}
                       onChange={(value) =>
                         setEditingData({ ...editingData, conteudo: value })
                       }
-                      api={api}
                     />
-                  </label>
+                  </div>
                 </>
               )}
 
@@ -5289,16 +5284,15 @@ const Home = ({ isEditMode = false }) => {
                     />
                   </label>
 
-                  <label>
+                  <div className="field">
                     <strong>Conteúdo:</strong>
                     <RichTextEditor
                       value={editingData.conteudo || ""}
                       onChange={(value) =>
                         setEditingData({ ...editingData, conteudo: value })
                       }
-                      api={api}
                     />
-                  </label>
+                  </div>
 
                   <label>
                     <strong>URL de Vídeo (opcional):</strong>
@@ -5914,16 +5908,15 @@ const Home = ({ isEditMode = false }) => {
                 {/* Conteúdo com Rich Text Editor - para todas as seções */}
                 {editingSection !== "contactos" &&
                   editingSection !== "projetos" && (
-                    <label>
+                    <div className="field">
                       <strong>Conteúdo:</strong>
                       <RichTextEditor
                         value={editingData.conteudo || ""}
                         onChange={(value) =>
                           setEditingData({ ...editingData, conteudo: value })
                         }
-                        api={api}
                       />
-                    </label>
+                    </div>
                   )}
               </div>
               <div className="edit-modal-footer">

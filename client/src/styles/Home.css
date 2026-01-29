@@ -499,6 +499,12 @@
   margin-bottom: 20px;
 }
 
+.edit-modal-body .field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
 /* RichText editor styles */
 .richtext-editor .rt-toolbar {
   display: flex;
@@ -523,24 +529,33 @@
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
 }
 
-.richtext-editor .rt-toolbar .rt-btn-link,
-.richtext-editor .rt-toolbar .rt-btn-image {
-  background: #667eea;
-  color: white;
-  border-color: #667eea;
+.richtext-editor .rt-toolbar select {
+  background: #f5f6fb;
+  border: 1px solid #e6e9f8;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #1f2937;
 }
 
 .rt-editor-area {
   border-radius: 6px;
   background: white;
+  font-family: inherit;
+  font-size: 1rem;
+  color: #000;
 }
 
-/* make list bullets appear inside the editor area */
+/* list bullets aligned with text, caret appears after bullet */
 .rt-editor-area ul,
 .rt-editor-area ol {
-  list-style-position: inside;
-  padding-left: 1.2rem;
+  list-style-position: outside;
+  padding-left: 1.4rem;
   margin: 0.6rem 0;
+}
+
+.rt-editor-area li {
+  margin-left: 0.2rem;
 }
 
 /* ensure noticia action buttons are positioned relative to the item */
@@ -916,7 +931,7 @@
 
 .content-subsection p {
   text-align: left;
-  color: #666;
+  color: #000;
   line-height: 1.8;
   margin-bottom: 16px;
   white-space: pre-wrap;
@@ -926,7 +941,7 @@
 
 .content-preview {
   text-align: left;
-  color: #666;
+  color: #000;
   line-height: 1.8;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -945,6 +960,17 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
+}
+
+.content-preview ul,
+.content-preview ol {
+  list-style-position: outside;
+  padding-left: 1.4rem;
+  margin: 0.6rem 0;
+}
+
+.content-preview li {
+  margin-left: 0.2rem;
 }
 
 .content-image,
