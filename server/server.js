@@ -23,6 +23,9 @@ if (fs.existsSync(rootEnv)) {
 
 const app = express();
 
+// Configurar trust proxy para funcionar atrás de proxies reversos (Render, etc)
+app.set('trust proxy', 1);
+
 // Global error handlers to avoid the process exiting unexpectedly in dev
 process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection at:", promise, "reason:", reason);
