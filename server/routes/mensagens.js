@@ -4,6 +4,8 @@ const pool = require("../config/database");
 const { authenticate, isAdminOrGestor } = require("../middleware/auth");
 const nodemailer = require("nodemailer");
 
+// Rotas de mensagens do formulario de contacto
+
 // GET - Obter todas as mensagens
 router.get("/", [authenticate, isAdminOrGestor], async (req, res) => {
   try {
@@ -30,9 +32,14 @@ router.get("/", [authenticate, isAdminOrGestor], async (req, res) => {
 router.get("/:id", [authenticate, isAdminOrGestor], async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.query("SELECT * FROM form_contacto WHERE id = $1", [id]);
+    const [rows] = await pool.query(
+      "SELECT * FROM form_contacto WHERE id = $1",
+      [id],
+    );
     if (!rows || rows.length === 0) {
-      return res.status(404).json({ success: false, message: "Mensagem não encontrada." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Mensagem não encontrada." });
     }
     res.json({ success: true, data: rows[0] });
   } catch (error) {
@@ -45,7 +52,10 @@ router.get("/:id", [authenticate, isAdminOrGestor], async (req, res) => {
 router.put("/:id/read", [authenticate, isAdminOrGestor], async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query("UPDATE form_contacto SET respondido = true, data_resposta = NOW(), respondido_por = $1 WHERE id = $2", [req.user.id, id]);
+    await pool.query(
+      "UPDATE form_contacto SET respondido = true, data_resposta = NOW(), respondido_por = $1 WHERE id = $2",
+      [req.user.id, id],
+    );
     res.json({ success: true, message: "Mensagem marcada como lida." });
   } catch (error) {
     console.error("Erro ao marcar mensagem como lida:", error);
@@ -71,7 +81,7 @@ router.post(
       // Obter mensagem original
       const [mensagens] = await pool.query(
         "SELECT * FROM form_contacto WHERE id = $1",
-        [id]
+        [id],
       );
 
       if (mensagens.length === 0) {
@@ -84,7 +94,7 @@ router.post(
 
       // Enviar email de resposta
       try {
-        const { sendMailSafe } = require('../utils/email');
+        const { sendMailSafe } = require("../utils/email");
         const mail = {
           from: process.env.EMAIL_FROM,
           to: mensagem.email,
@@ -107,26 +117,37 @@ router.post(
         // Atualizar na base de dados mesmo que o email não tenha sido enviado — marca como respondida
         await pool.query(
           "UPDATE form_contacto SET respondido = true, resposta = $1, respondido_por = $2, data_resposta = NOW() WHERE id = $3",
-          [resposta, req.user.id, id]
+          [resposta, req.user.id, id],
         );
 
         if (!result.ok) {
-          console.warn('Resposta não enviada por email:', result.error && result.error.message ? result.error.message : result.error);
+          console.warn(
+            "Resposta não enviada por email:",
+            result.error && result.error.message
+              ? result.error.message
+              : result.error,
+          );
           // return a success response but warn client that email was not delivered
-          return res.json({ success: true, message: 'Resposta registada mas não enviada por email (problema SMTP).' });
+          return res.json({
+            success: true,
+            message:
+              "Resposta registada mas não enviada por email (problema SMTP).",
+          });
         }
 
-        res.json({ success: true, message: 'Resposta enviada com sucesso.' });
+        res.json({ success: true, message: "Resposta enviada com sucesso." });
       } catch (emailError) {
-        console.error('Erro ao processar resposta:', emailError);
+        console.error("Erro ao processar resposta:", emailError);
         // ensure we still inform client but don't crash
-        return res.status(500).json({ success: false, message: 'Erro ao processar resposta.' });
+        return res
+          .status(500)
+          .json({ success: false, message: "Erro ao processar resposta." });
       }
     } catch (error) {
       console.error("Erro ao responder mensagem:", error);
       res.status(500).json({ success: false, message: "Erro no servidor." });
     }
-  }
+  },
 );
 
 // DELETE - Eliminar mensagem

@@ -3,6 +3,8 @@ const router = express.Router();
 const pool = require("../config/database");
 const { authenticate, isAdminOrGestor } = require("../middleware/auth");
 
+// Rotas de conteudo institucional
+
 // GET - Obter conteúdo institucional
 router.get("/", async (req, res) => {
   try {

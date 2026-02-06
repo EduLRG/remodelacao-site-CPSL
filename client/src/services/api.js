@@ -1,7 +1,9 @@
 import axios from "axios";
 
+// Base URL da API (configuravel via .env)
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:4000/api";
 
+// Instancia Axios com headers padrao
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -9,7 +11,7 @@ const api = axios.create({
   },
 });
 
-// Interceptor para adicionar token
+// Interceptor para adicionar token JWT quando existe
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -18,10 +20,10 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
-// Interceptor para tratar erros
+// Interceptor para tratar erros e forcar relogin em 401
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -30,7 +32,7 @@ api.interceptors.response.use(
       window.location.href = "/admin";
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

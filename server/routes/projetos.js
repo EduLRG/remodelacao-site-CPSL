@@ -4,6 +4,8 @@ const { body, validationResult } = require("express-validator");
 const pool = require("../config/database");
 const { authenticate, isAdminOrGestor } = require("../middleware/auth");
 
+// Rotas de projetos (publico e admin)
+
 // @route   GET /api/projetos
 // @desc    Obter todos os projetos (públicos: apenas ativos)
 // @access  Public
@@ -41,7 +43,7 @@ router.get("/:id", async (req, res) => {
 
     const [projetos] = await pool.query(
       "SELECT * FROM projetos WHERE id = $1",
-      [id]
+      [id],
     );
 
     if (projetos.length === 0) {
@@ -54,7 +56,7 @@ router.get("/:id", async (req, res) => {
     // Obter media associada
     const [media] = await pool.query(
       "SELECT * FROM media WHERE tabela_referencia = $1 AND id_referencia = $2 ORDER BY ordem ASC",
-      ["projetos", id]
+      ["projetos", id],
     );
 
     res.json({
@@ -119,7 +121,7 @@ router.post(
           ativo ?? true,
           ordem || 0,
           req.user.id,
-        ]
+        ],
       );
 
       res.status(201).json({
@@ -137,7 +139,7 @@ router.post(
         message: "Erro no servidor.",
       });
     }
-  }
+  },
 );
 
 // @route   PUT /api/projetos/:id
@@ -159,7 +161,7 @@ router.put("/:id", [authenticate, isAdminOrGestor], async (req, res) => {
 
     const [existing] = await pool.query(
       "SELECT id FROM projetos WHERE id = $1",
-      [id]
+      [id],
     );
 
     if (existing.length === 0) {
@@ -217,7 +219,7 @@ router.put("/:id", [authenticate, isAdminOrGestor], async (req, res) => {
 
     await pool.query(
       `UPDATE projetos SET ${updates.join(", ")} WHERE id = $${paramCount}`,
-      values
+      values,
     );
 
     res.json({
@@ -242,7 +244,7 @@ router.delete("/:id", [authenticate, isAdminOrGestor], async (req, res) => {
 
     const [existing] = await pool.query(
       "SELECT id FROM projetos WHERE id = $1",
-      [id]
+      [id],
     );
 
     if (existing.length === 0) {
@@ -255,7 +257,7 @@ router.delete("/:id", [authenticate, isAdminOrGestor], async (req, res) => {
     // Eliminar media associada
     await pool.query(
       "DELETE FROM media WHERE tabela_referencia = $1 AND id_referencia = $2",
-      ["projetos", id]
+      ["projetos", id],
     );
 
     // Eliminar projeto

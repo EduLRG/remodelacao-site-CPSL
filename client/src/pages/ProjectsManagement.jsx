@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../styles/ProjectsManagement.css";
 
+// Pagina de gestao de projetos
 const ProjectsManagement = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
@@ -28,6 +29,7 @@ const ProjectsManagement = () => {
     fetchProjects();
   }, []);
 
+  // Carrega projetos do backend
   const fetchProjects = async () => {
     try {
       setLoading(true);
@@ -41,6 +43,7 @@ const ProjectsManagement = () => {
     }
   };
 
+  // Atualiza estado do formulario
   const handleChange = (e) => {
     const value =
       e.target.type === "checkbox" ? e.target.checked : e.target.value;
@@ -50,6 +53,7 @@ const ProjectsManagement = () => {
     });
   };
 
+  // Cria/atualiza projeto
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -79,6 +83,7 @@ const ProjectsManagement = () => {
     }
   };
 
+  // Abre modal com dados do projeto
   const handleEdit = (project) => {
     setEditingProject(project);
     setFormData({
@@ -93,6 +98,7 @@ const ProjectsManagement = () => {
     setShowModal(true);
   };
 
+  // Elimina projeto
   const handleDelete = async (id) => {
     if (!window.confirm("Tem certeza que deseja eliminar este projeto?")) {
       return;
@@ -109,6 +115,7 @@ const ProjectsManagement = () => {
     }
   };
 
+  // Alterna estado ativo/inativo
   const toggleActive = async (id, currentStatus) => {
     try {
       await api.put(`/projetos/${id}`, { ativo: !currentStatus });
@@ -121,6 +128,7 @@ const ProjectsManagement = () => {
     }
   };
 
+  // Repor formulario para novo projeto
   const resetForm = () => {
     setEditingProject(null);
     setFormData({
@@ -134,6 +142,7 @@ const ProjectsManagement = () => {
     });
   };
 
+  // Abre modal para novo projeto
   const handleNewProject = () => {
     resetForm();
     setShowModal(true);
@@ -270,7 +279,7 @@ const ProjectsManagement = () => {
                       onError={(e) => {
                         // inline SVG placeholder to avoid external network calls
                         e.target.src = `data:image/svg+xml;utf8,${encodeURIComponent(
-                          "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect fill='#f6f7fb' width='100%' height='100%'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#888' font-size='18' font-family='Arial, sans-serif'>Sem Imagem</text></svg>"
+                          "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect fill='#f6f7fb' width='100%' height='100%'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#888' font-size='18' font-family='Arial, sans-serif'>Sem Imagem</text></svg>",
                         )}`;
                       }}
                     />

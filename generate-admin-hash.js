@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 
+// Gera hash bcrypt para inserir na BD (usa argumento ou default)
 const password = process.argv[2] || "Admin123!";
 
 bcrypt
@@ -15,10 +16,10 @@ bcrypt
     console.log("Use este hash no SQL:");
     console.log("========================================\n");
     console.log(
-      `INSERT INTO Utilizadores (nome, email, password_hash, tipo) VALUES`
+      `INSERT INTO Utilizadores (nome, email, password_hash, tipo) VALUES`,
     );
     console.log(
-      `('Administrador', 'admin@cpslanheses.pt', '${hash}', 'Admin');`
+      `('Administrador', 'admin@cpslanheses.pt', '${hash}', 'Admin');`,
     );
     console.log("\n========================================\n");
   })

@@ -4,10 +4,12 @@ export const AccessibilityContext = createContext();
 
 const FONT_SIZES = ["normal", "large", "xlarge", "xxlarge", "xxxlarge"];
 
+// Provider de acessibilidade (tamanho de letra e contraste)
 export const AccessibilityProvider = ({ children }) => {
   const [fontSize, setFontSize] = useState("normal");
   const [highContrast, setHighContrast] = useState(false);
 
+  // Ler preferencias guardadas
   useEffect(() => {
     const savedFontSize = localStorage.getItem("fontSize");
     const savedContrast = localStorage.getItem("highContrast");
@@ -18,6 +20,7 @@ export const AccessibilityProvider = ({ children }) => {
     if (savedContrast) setHighContrast(savedContrast === "true");
   }, []);
 
+  // Aplicar classes no body e persistir preferencias
   useEffect(() => {
     document.body.className = "";
     document.body.classList.add(`font-${fontSize}`);
@@ -27,6 +30,7 @@ export const AccessibilityProvider = ({ children }) => {
     localStorage.setItem("highContrast", highContrast);
   }, [fontSize, highContrast]);
 
+  // Aumenta tamanho de letra
   const increaseFontSize = () => {
     const currentIndex = FONT_SIZES.indexOf(fontSize);
     if (currentIndex < FONT_SIZES.length - 1) {
@@ -34,6 +38,7 @@ export const AccessibilityProvider = ({ children }) => {
     }
   };
 
+  // Diminui tamanho de letra
   const decreaseFontSize = () => {
     const currentIndex = FONT_SIZES.indexOf(fontSize);
     if (currentIndex > 0) {
@@ -41,10 +46,12 @@ export const AccessibilityProvider = ({ children }) => {
     }
   };
 
+  // Repor tamanho de letra
   const resetFontSize = () => {
     setFontSize("normal");
   };
 
+  // Alternar modo de alto contraste
   const toggleContrast = () => {
     setHighContrast(!highContrast);
   };

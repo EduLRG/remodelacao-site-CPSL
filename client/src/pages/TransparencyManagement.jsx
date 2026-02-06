@@ -4,12 +4,12 @@ import api from "../services/api";
 import "../styles/ProjectsManagement.css";
 import "../styles/TransparencyManagement.css";
 
-const API_BASE =
-  (process.env.REACT_APP_API_URL || "http://localhost:4000/api").replace(
-    /\/?api$/,
-    ""
-  );
+// Base URL para abrir ficheiros (sem sufixo /api)
+const API_BASE = (
+  process.env.REACT_APP_API_URL || "http://localhost:4000/api"
+).replace(/\/?api$/, "");
 
+// Modelo base do formulario
 const defaultForm = {
   titulo: "",
   descricao: "",
@@ -18,6 +18,7 @@ const defaultForm = {
   ficheiro: null,
 };
 
+// Pagina de gestao de documentos de transparencia
 const TransparencyManagement = () => {
   const navigate = useNavigate();
   const [documentos, setDocumentos] = useState([]);
@@ -33,6 +34,7 @@ const TransparencyManagement = () => {
     fetchDocumentos();
   }, []);
 
+  // Carrega documentos do backend
   const fetchDocumentos = async () => {
     try {
       setLoading(true);
@@ -47,12 +49,14 @@ const TransparencyManagement = () => {
     }
   };
 
+  // Normaliza URL de ficheiro (absoluta ou relativa)
   const normalizeFileUrl = (url) => {
     if (!url) return "#";
     if (url.startsWith("http")) return url;
     return `${API_BASE}${url}`;
   };
 
+  // Atualiza estado do formulario (inclui ficheiro)
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "ficheiro") {
@@ -62,6 +66,7 @@ const TransparencyManagement = () => {
     }
   };
 
+  // Cria/atualiza documento
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -81,8 +86,9 @@ const TransparencyManagement = () => {
     payload.append("titulo", formData.titulo.trim());
     payload.append("ano", formData.ano);
     if (formData.ficheiro) payload.append("ficheiro", formData.ficheiro);
-    if (formData.descricao.trim()) payload.append("descricao", formData.descricao.trim());
-  if (formData.tipo) payload.append("tipo", formData.tipo);
+    if (formData.descricao.trim())
+      payload.append("descricao", formData.descricao.trim());
+    if (formData.tipo) payload.append("tipo", formData.tipo);
 
     try {
       setSubmitting(true);
@@ -98,7 +104,7 @@ const TransparencyManagement = () => {
       setSuccess(
         editingDoc
           ? "Documento atualizado com sucesso!"
-          : "Documento adicionado com sucesso!"
+          : "Documento adicionado com sucesso!",
       );
       setFormData((prev) => ({ ...defaultForm, ano: prev.ano }));
       setEditingDoc(null);
@@ -106,15 +112,19 @@ const TransparencyManagement = () => {
       await fetchDocumentos();
       setTimeout(() => setSuccess(""), 2500);
     } catch (err) {
-      const message = err.response?.data?.message || "Erro ao enviar documento.";
+      const message =
+        err.response?.data?.message || "Erro ao enviar documento.";
       setError(message);
     } finally {
       setSubmitting(false);
     }
   };
 
+  // Elimina documento
   const handleDelete = async (id) => {
-    const confirmed = window.confirm("Tem certeza que deseja eliminar este documento?");
+    const confirmed = window.confirm(
+      "Tem certeza que deseja eliminar este documento?",
+    );
     if (!confirmed) return;
 
     try {
@@ -127,12 +137,14 @@ const TransparencyManagement = () => {
     }
   };
 
+  // Abre modal para novo documento
   const openCreate = () => {
     setEditingDoc(null);
     setFormData({ ...defaultForm });
     setShowModal(true);
   };
 
+  // Abre modal para editar documento
   const openEdit = (doc) => {
     setEditingDoc(doc);
     setFormData({
@@ -155,7 +167,8 @@ const TransparencyManagement = () => {
         <div>
           <h2>Transparência</h2>
           <p className="section-description">
-            Carregue relatórios e documentos oficiais em PDF. Só Administradores e Gestores podem adicionar, editar ou eliminar ficheiros.
+            Carregue relatórios e documentos oficiais em PDF. Só Administradores
+            e Gestores podem adicionar, editar ou eliminar ficheiros.
           </p>
         </div>
         <button className="btn-primary" onClick={openCreate}>
@@ -177,7 +190,10 @@ const TransparencyManagement = () => {
         ) : documentos.length === 0 ? (
           <div className="empty-state">
             <p>Nenhum documento carregado ainda.</p>
-            <small>Os ficheiros enviados aparecem aqui com link direto para visualização.</small>
+            <small>
+              Os ficheiros enviados aparecem aqui com link direto para
+              visualização.
+            </small>
           </div>
         ) : (
           <div className="docs-list">
@@ -190,12 +206,18 @@ const TransparencyManagement = () => {
                       <h4>{doc.titulo}</h4>
                       <div className="doc-meta">
                         <span className="pill">Ano {doc.ano}</span>
-                        {doc.tipo && <span className="pill pill-neutral">{doc.tipo}</span>}
+                        {doc.tipo && (
+                          <span className="pill pill-neutral">{doc.tipo}</span>
+                        )}
                         {doc.tamanho_ficheiro && (
-                          <span className="pill pill-muted">{doc.tamanho_ficheiro}</span>
+                          <span className="pill pill-muted">
+                            {doc.tamanho_ficheiro}
+                          </span>
                         )}
                       </div>
-                      {doc.descricao && <p className="doc-description">{doc.descricao}</p>}
+                      {doc.descricao && (
+                        <p className="doc-description">{doc.descricao}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -236,7 +258,10 @@ const TransparencyManagement = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingDoc ? "Editar documento" : "Adicionar documento"}</h3>
-              <button className="modal-close" onClick={() => setShowModal(false)}>
+              <button
+                className="modal-close"
+                onClick={() => setShowModal(false)}
+              >
                 ×
               </button>
             </div>
@@ -280,7 +305,9 @@ const TransparencyManagement = () => {
                   >
                     <option value="Relatorio">Relatório & Contas</option>
                     <option value="Contas">Contas</option>
-                    <option value="Relatorio_Atividades">Relatório de Atividades</option>
+                    <option value="Relatorio_Atividades">
+                      Relatório de Atividades
+                    </option>
                     <option value="Outro">Outro</option>
                   </select>
                 </div>
@@ -311,7 +338,9 @@ const TransparencyManagement = () => {
                   required={!editingDoc}
                 />
                 {formData.ficheiro && (
-                  <p className="file-name">Selecionado: {formData.ficheiro.name}</p>
+                  <p className="file-name">
+                    Selecionado: {formData.ficheiro.name}
+                  </p>
                 )}
                 {editingDoc && !formData.ficheiro && (
                   <p className="file-name">A manter ficheiro atual</p>
@@ -326,12 +355,16 @@ const TransparencyManagement = () => {
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary" disabled={submitting}>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={submitting}
+                >
                   {submitting
                     ? "A guardar..."
                     : editingDoc
-                    ? "Atualizar documento"
-                    : "Guardar documento"}
+                      ? "Atualizar documento"
+                      : "Guardar documento"}
                 </button>
               </div>
             </form>

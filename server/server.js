@@ -7,6 +7,7 @@ const path = require("path");
 const fs = require("fs");
 const dotenv = require("dotenv");
 
+// Resolver .env da raiz do projeto ou da pasta server
 const rootEnv = path.resolve(__dirname, "..", ".env");
 const serverEnv = path.resolve(__dirname, ".env");
 if (fs.existsSync(rootEnv)) {
@@ -23,10 +24,10 @@ if (fs.existsSync(rootEnv)) {
 
 const app = express();
 
-// Configurar trust proxy para funcionar atrás de proxies reversos (Render, etc)
-app.set('trust proxy', 1);
+// Configurar trust proxy para funcionar atras de proxies reversos (Render, etc)
+app.set("trust proxy", 1);
 
-// Global error handlers to avoid the process exiting unexpectedly in dev
+// Handlers globais para evitar encerramento inesperado em dev
 process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection at:", promise, "reason:", reason);
   // optionally: send to monitoring service
@@ -37,7 +38,7 @@ process.on("uncaughtException", (err) => {
   // Note: in production you may want to shutdown the process gracefully
 });
 
-// Middleware de segurança
+// Middleware de seguranca
 app.use(helmet());
 
 // CORS
@@ -76,14 +77,14 @@ app.use(
       return callback(new Error("CORS policy: Origin not allowed"));
     },
     credentials: true,
-  })
+  }),
 );
 
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
+// Rate limiting por IP
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: process.env.NODE_ENV === "production" ? 100 : 1000, // 1000 em dev, 100 em produção
@@ -91,8 +92,8 @@ const limiter = rateLimit({
 });
 app.use("/api/", limiter);
 
-// Servir ficheiros estáticos (uploads) apenas se houver diretório local
-// Em produção no Vercel recomenda-se usar Cloudinary; o disco é efémero.
+// Servir ficheiros estaticos (uploads) apenas se houver diretorio local
+// Em producao no Vercel recomenda-se usar Cloudinary; o disco e efemero.
 const uploadsPath = path.resolve(__dirname, "..", "uploads");
 if (fs.existsSync(uploadsPath)) {
   app.use("/uploads", (req, res, next) => {
@@ -127,7 +128,7 @@ app.use("/api/mensagens", require("./routes/mensagens"));
 app.use("/api/secoes-personalizadas", require("./routes/secoesPersonalizadas"));
 app.use("/api/hero", require("./routes/hero"));
 
-// Rota de teste
+// Rota de teste/health check
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,
@@ -155,6 +156,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
+// Arranque do servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor a correr na porta ${PORT}`);
   console.log(`📡 API disponível em http://localhost:${PORT}/api`);

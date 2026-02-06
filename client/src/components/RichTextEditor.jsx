@@ -1,8 +1,10 @@
 import React, { useRef, useState, useEffect } from "react";
 import "../styles/RichTextEditor.css";
 
+// Limite de tamanho para imagens enviadas
 const IMAGE_MAX_MB = 3;
 
+// Valida ficheiro de imagem antes do upload
 const validateImageFile = (file) =>
   new Promise((resolve) => {
     if (!file) {
@@ -26,6 +28,7 @@ const validateImageFile = (file) =>
     resolve({ ok: true });
   });
 
+// Editor rich text com toolbar e upload de imagem
 function RichTextEditor({ value, onChange, api }) {
   const editorRef = useRef(null);
   const isUserTyping = useRef(false);
@@ -40,7 +43,7 @@ function RichTextEditor({ value, onChange, api }) {
     underline: false,
   });
 
-  // Sincronizar conteúdo inicial APENAS uma vez
+  // Sincronizar conteudo inicial APENAS uma vez
   useEffect(() => {
     if (editorRef.current && !isUserTyping.current) {
       // Só atualizar se o conteúdo do editor for diferente do value externo
@@ -50,6 +53,7 @@ function RichTextEditor({ value, onChange, api }) {
     }
   }, [value]);
 
+  // Atualiza estado de formatacao (bold/italic/underline)
   const updateFormatState = () => {
     const selection = window.getSelection();
     if (!selection.rangeCount) return;
@@ -64,6 +68,7 @@ function RichTextEditor({ value, onChange, api }) {
     // Não atualizar intendedFormatRef aqui - isso causava o bug
   };
 
+  // Corrige estado de formato ao clicar no editor
   const handleClick = () => {
     setTimeout(() => {
       const selection = window.getSelection();
@@ -93,6 +98,7 @@ function RichTextEditor({ value, onChange, api }) {
     }, 10);
   };
 
+  // Atualiza estado de formato ao usar o teclado
   const handleKeyUp = () => {
     // Ao usar teclado (setas), atualizar tanto visualização quanto intenção
     const selection = window.getSelection();
@@ -108,6 +114,7 @@ function RichTextEditor({ value, onChange, api }) {
     intendedFormatRef.current = currentState;
   };
 
+  // Trata input e normaliza HTML produzido
   const handleInput = () => {
     isUserTyping.current = true;
 
@@ -130,6 +137,7 @@ function RichTextEditor({ value, onChange, api }) {
     }, 0);
   };
 
+  // Executa comando do editor e refresca estado
   const execCommand = (command, value = null) => {
     // Forçar uso de tags HTML em vez de estilos inline
     document.execCommand("styleWithCSS", false, false);
@@ -148,6 +156,7 @@ function RichTextEditor({ value, onChange, api }) {
     }, 0);
   };
 
+  // Normaliza HTML e propaga para o estado externo
   const updateContent = () => {
     if (editorRef.current) {
       let html = editorRef.current.innerHTML;
@@ -183,6 +192,7 @@ function RichTextEditor({ value, onChange, api }) {
     }
   };
 
+  // Upload de imagem e insercao no editor
   const insertImage = async () => {
     const input = document.createElement("input");
     input.type = "file";
@@ -224,6 +234,7 @@ function RichTextEditor({ value, onChange, api }) {
     input.click();
   };
 
+  // Insercao de link simples
   const insertLink = () => {
     const url = prompt("Insira o URL:");
     if (url) {

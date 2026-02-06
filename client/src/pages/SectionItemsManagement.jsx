@@ -5,8 +5,10 @@ import RichTextEditor from "../components/RichTextEditor";
 import api from "../services/api";
 import "../styles/Dashboard.css";
 
+// Limite de tamanho para imagens enviadas
 const IMAGE_MAX_MB = 3;
 
+// Valida ficheiro de imagem antes do upload
 const validateImageFile = (file) =>
   new Promise((resolve) => {
     if (!file) {
@@ -30,6 +32,7 @@ const validateImageFile = (file) =>
     resolve({ ok: true });
   });
 
+// Pagina de gestao de itens de uma secao personalizada
 function SectionItemsManagement() {
   const { secaoId } = useParams();
   const navigate = useNavigate();
@@ -49,6 +52,7 @@ function SectionItemsManagement() {
     link_externo: "",
   });
 
+  // Validar user e carregar dados da secao
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -58,6 +62,7 @@ function SectionItemsManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, navigate, secaoId]);
 
+  // Carrega dados da secao e lista de itens
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -70,7 +75,7 @@ function SectionItemsManagement() {
 
       // Buscar itens da seção
       const itensResponse = await api.get(
-        `/secoes-personalizadas/${secaoId}/itens`
+        `/secoes-personalizadas/${secaoId}/itens`,
       );
       if (itensResponse.data.success) {
         setItens(itensResponse.data.data || []);
@@ -83,6 +88,7 @@ function SectionItemsManagement() {
     }
   };
 
+  // Abre modal para criar/editar item
   const handleOpenModal = (item = null) => {
     if (item) {
       setEditingItem(item);
@@ -108,6 +114,7 @@ function SectionItemsManagement() {
     setShowModal(true);
   };
 
+  // Upload de imagem para o item
   const uploadImage = async (file) => {
     try {
       const validation = await validateImageFile(file);
@@ -140,6 +147,7 @@ function SectionItemsManagement() {
     }
   };
 
+  // Cria/atualiza item
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -147,7 +155,7 @@ function SectionItemsManagement() {
         // Atualizar
         await api.put(
           `/secoes-personalizadas/${secaoId}/itens/${editingItem.id}`,
-          formData
+          formData,
         );
         alert("Item atualizado com sucesso!");
       } else {
@@ -163,6 +171,7 @@ function SectionItemsManagement() {
     }
   };
 
+  // Elimina item
   const handleDelete = async (itemId) => {
     if (!window.confirm("Tem certeza que deseja eliminar este item?")) {
       return;

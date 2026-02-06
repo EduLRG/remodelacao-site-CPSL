@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../styles/Messages.css";
 
+// Pagina de gestao de mensagens do formulario
 const Messages = () => {
   const navigate = useNavigate();
   const [mensagens, setMensagens] = useState([]);
@@ -15,6 +16,7 @@ const Messages = () => {
     direction: "desc",
   });
 
+  // Carrega mensagens da API (com dedupe local)
   const fetchMensagens = async () => {
     try {
       setLoading(true);
@@ -61,6 +63,7 @@ const Messages = () => {
     fetchMensagens();
   }, []);
 
+  // Abre mensagem e marca como lida
   const openMessage = async (m) => {
     try {
       const resp = await api.get(`/mensagens/${m.id}`);
@@ -90,6 +93,7 @@ const Messages = () => {
     }
   };
 
+  // Marca mensagem como lida no servidor
   const markRead = async (id) => {
     try {
       await api.put(`/mensagens/${id}/read`);
@@ -105,6 +109,7 @@ const Messages = () => {
     }
   };
 
+  // Elimina mensagem selecionada
   const handleDelete = async (id) => {
     if (!window.confirm("Tem certeza que deseja eliminar esta mensagem?"))
       return;
@@ -122,7 +127,7 @@ const Messages = () => {
 
   const unreadCount = mensagens.filter((m) => !m.respondido).length;
 
-  // Função para ordenar ao clicar no cabeçalho
+  // Funcao para ordenar ao clicar no cabecalho
   const handleSort = (key) => {
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {

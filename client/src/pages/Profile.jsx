@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
 import "../styles/Profile.css";
 
+// Pagina de perfil do utilizador autenticado
 const Profile = () => {
   const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);

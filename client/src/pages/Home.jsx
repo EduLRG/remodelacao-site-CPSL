@@ -11,6 +11,7 @@ import api from "../services/api";
 import { AuthContext } from "../contexts/AuthContext";
 import "../styles/Home.css";
 
+// Pagina principal (site publico + edicao inline no dashboard)
 // Local SVG placeholder (data URI) to avoid external requests to via.placeholder.com
 const PLACEHOLDER_SVG =
   `data:image/svg+xml;utf8,` +
@@ -18,18 +19,21 @@ const PLACEHOLDER_SVG =
     `<svg xmlns='http://www.w3.org/2000/svg' width='800' height='400'><rect fill='#f6f7fb' width='100%' height='100%'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#888' font-size='28' font-family='Arial, sans-serif'>Imagem</text></svg>`,
   );
 
+// Placeholder para documentos PDF
 const PDF_PLACEHOLDER =
   `data:image/svg+xml;utf8,` +
   encodeURIComponent(
     `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='350'><rect fill='#0b1930' width='100%' height='100%'/><rect x='40' y='30' rx='18' ry='18' width='520' height='290' fill='#132844' stroke='#4da3ff' stroke-width='6'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' fill='#4da3ff' font-size='64' font-family='Arial, sans-serif' font-weight='700'>PDF</text></svg>`,
   );
 
+// Valores base do hero quando nao ha config
 const DEFAULT_HERO = {
   titulo: "Centro Paroquial e Social de Lanheses",
   subtitulo: "Dedicando-nos ao apoio social à Pessoas Mais Velhas e à Infância",
   imagem_fundo: "",
 };
 
+// Formata data para pt-PT
 const formatDate = (dateStr) => {
   if (!dateStr) return "";
   try {
@@ -39,6 +43,7 @@ const formatDate = (dateStr) => {
   }
 };
 
+// Converte para formato YYYY-MM-DD (input type=date)
 const toInputDateValue = (dateStr) => {
   if (!dateStr) return "";
   const date = new Date(dateStr);
@@ -51,6 +56,7 @@ const toInputDateValue = (dateStr) => {
 
 const MAX_RESPOSTA_DESTAQUES = 3;
 
+// Faz parse de destaques (string JSON ou array)
 const parseRespostaDestaques = (value) => {
   if (!value) return [];
   if (Array.isArray(value)) return value;
@@ -65,12 +71,14 @@ const parseRespostaDestaques = (value) => {
   return [];
 };
 
+// Normaliza estrutura de destaques
 const normalizeRespostaDestaques = (value) =>
   parseRespostaDestaques(value).map((item) => ({
     titulo: item?.titulo ? String(item.titulo) : "",
     texto: item?.texto ? String(item.texto) : "",
   }));
 
+// Limpa e limita lista de destaques
 const buildRespostaDestaques = (value) =>
   normalizeRespostaDestaques(value)
     .map((item) => ({
@@ -80,12 +88,13 @@ const buildRespostaDestaques = (value) =>
     .filter((item) => item.titulo || item.texto)
     .slice(0, MAX_RESPOSTA_DESTAQUES);
 
+// Serializa destaques para JSON (ou null)
 const serializeRespostaDestaques = (value) => {
   const cleaned = buildRespostaDestaques(value);
   return cleaned.length ? JSON.stringify(cleaned) : null;
 };
 
-// Editor simples baseado em contentEditable (compatível com React 19+)
+// Editor simples baseado em contentEditable (compativel com React 19+)
 function RichTextEditor({ value, onChange }) {
   const editorRef = useRef(null);
   const savedRangeRef = useRef(null);
@@ -96,6 +105,7 @@ function RichTextEditor({ value, onChange }) {
     list: false,
   });
 
+  // Guarda selecao atual do editor
   const saveSelection = () => {
     try {
       const sel = document.getSelection();
@@ -107,6 +117,7 @@ function RichTextEditor({ value, onChange }) {
     }
   };
 
+  // Restaura selecao guardada
   const restoreSelection = () => {
     try {
       const sel = document.getSelection();
@@ -119,6 +130,7 @@ function RichTextEditor({ value, onChange }) {
     }
   };
 
+  // Sincroniza estado de formatos (bold/italic/underline/lista)
   const syncFormats = () => {
     try {
       const sel = document.getSelection();
@@ -149,6 +161,7 @@ function RichTextEditor({ value, onChange }) {
     }
   };
 
+  // Executa comando de edicao e atualiza estado
   const exec = (command, value = null) => {
     // execCommand ainda funciona na maioria dos browsers para operações simples
     restoreSelection();
@@ -307,15 +320,20 @@ const DATE_MAX = new Date().toISOString().slice(0, 10);
 const DATE_FUTURE_MAX = "2100-12-31";
 const IMAGE_MAX_MB = 3;
 
+// Remove tudo exceto digitos
 const normalizeDigits = (value = "") => value.replace(/\D/g, "");
 
+// Valida codigo postal (0000-000)
 const isValidPostal = (value = "") =>
   new RegExp(`^${POSTAL_PATTERN}$`).test(value.trim());
 
+// Valida telefone PT (9 digitos)
 const isValidPhone = (value = "") => normalizeDigits(value).length === 9;
 
+// Valida numero de utente (9 digitos)
 const isValidUtente = (value = "") => normalizeDigits(value).length === 9;
 
+// Valida NIF com digito de controlo
 const isValidNif = (value = "") => {
   const digits = normalizeDigits(value);
   if (digits.length !== 9) return false;
@@ -329,8 +347,10 @@ const isValidNif = (value = "") => {
   return check === nums[8];
 };
 
+// Valida NISS (11 digitos)
 const isValidNiss = (value = "") => normalizeDigits(value).length === 11;
 
+// Valida ficheiro de imagem antes do upload
 const validateImageFile = (file) =>
   new Promise((resolve) => {
     if (!file) {
@@ -354,6 +374,7 @@ const validateImageFile = (file) =>
     resolve({ ok: true });
   });
 
+// Normaliza opcoes de formulario vindas do backend
 const normalizeFormOptions = (opcoes = []) => {
   return opcoes.filter(Boolean).map((opt, idx) => {
     const tipo = opt?.tipo || opt?.id || opt?.value || opt;
@@ -364,6 +385,7 @@ const normalizeFormOptions = (opcoes = []) => {
   });
 };
 
+// Resolve configuracao de formulario para uma secao personalizada
 const getFormConfig = (secao) => {
   const hasForm = secao?.tem_formulario || secao?.config_formulario;
   if (!hasForm) return null;
@@ -390,6 +412,7 @@ const getFormConfig = (secao) => {
   };
 };
 
+// Componente principal da home
 const Home = ({ isEditMode = false }) => {
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
@@ -449,6 +472,7 @@ const Home = ({ isEditMode = false }) => {
   const institutionalModalRef = useRef(null);
   const respostaModalRef = useRef(null);
 
+  // Normaliza dados do hero e resolve URL de imagem
   const normalizeHeroConfig = (data = {}) => {
     const base = api.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
     const normalizedImage = data.imagem_fundo
@@ -464,8 +488,10 @@ const Home = ({ isEditMode = false }) => {
     };
   };
 
+  // Base URL sem /api para construir URLs publicas
   const getBaseUrl = () => api.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
 
+  // Normaliza URLs de media para absolutas
   const normalizeMediaUrls = useCallback((media = []) => {
     const base = getBaseUrl();
     return media.map((m) => ({
@@ -474,6 +500,7 @@ const Home = ({ isEditMode = false }) => {
     }));
   }, []);
 
+  // Mapeia secao para tabela de media
   const getMediaTableForSection = (section) => {
     if (section === "noticias") return "noticias_eventos";
     if (section === "respostas-sociais") return "respostas_sociais";
@@ -483,6 +510,7 @@ const Home = ({ isEditMode = false }) => {
     return null;
   };
 
+  // Limpa previews de media pendente
   const resetPendingMedia = () => {
     pendingMediaFiles.forEach((item) => {
       if (item.preview) URL.revokeObjectURL(item.preview);
@@ -490,11 +518,13 @@ const Home = ({ isEditMode = false }) => {
     setPendingMediaFiles([]);
   };
 
+  // Repor estado de media em edicao
   const resetMediaState = () => {
     resetPendingMedia();
     setExistingMedia([]);
   };
 
+  // Valida e adiciona ficheiros a fila de upload
   const addPendingMediaFiles = async (files) => {
     if (!files || !files.length) return;
     const accepted = [];
@@ -530,6 +560,7 @@ const Home = ({ isEditMode = false }) => {
     setPendingMediaFiles((prev) => [...prev, ...mapped]);
   };
 
+  // Remove ficheiro pendente e liberta preview
   const removePendingMedia = (id) => {
     setPendingMediaFiles((prev) => {
       const target = prev.find((item) => item.id === id);
@@ -538,6 +569,7 @@ const Home = ({ isEditMode = false }) => {
     });
   };
 
+  // Carrega media associada a uma referencia
   const fetchMediaForItem = useCallback(
     async (tabelaRef, idReferencia) => {
       if (!tabelaRef || !idReferencia) return [];
@@ -557,6 +589,7 @@ const Home = ({ isEditMode = false }) => {
     [normalizeMediaUrls],
   );
 
+  // Prepara media existente para edicao
   const loadExistingMediaForEdit = async (section, idReferencia) => {
     const tabelaRef = getMediaTableForSection(section);
     if (!tabelaRef || !idReferencia) {
@@ -572,6 +605,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  // Remove ficheiro de media associado
   const removeExistingMedia = async (mediaId) => {
     try {
       await api.delete(`/media/${mediaId}`);
@@ -582,6 +616,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  // Faz upload de media pendente para o item
   const uploadPendingMediaForItem = async (tabelaRef, idReferencia) => {
     if (!tabelaRef || !idReferencia || pendingMediaFiles.length === 0) return;
     try {
@@ -615,6 +650,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  // Atualiza media em memoria apos upload/remoçao
   const refreshItemMedia = async (section, idReferencia, secaoId = null) => {
     const tabelaRef = getMediaTableForSection(section);
     if (!tabelaRef || !idReferencia) return;
@@ -647,6 +683,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  // Construtor de lista de imagens para carrossel
   const buildCarouselImages = (primaryUrl, media = []) => {
     const urls = [];
     media.forEach((m) => {
@@ -659,6 +696,7 @@ const Home = ({ isEditMode = false }) => {
     return Array.from(new Set(urls));
   };
 
+  // Construtor de galeria (sem duplicados)
   const buildGalleryImages = (primaryUrl, media = []) => {
     const urls = [];
     media.forEach((m) => {
@@ -671,6 +709,7 @@ const Home = ({ isEditMode = false }) => {
     return Array.from(new Set(urls));
   };
 
+  // Carrossel simples de imagens
   const ImageCarousel = ({ images = [], altPrefix = "Imagem" }) => {
     const [index, setIndex] = useState(0);
 
@@ -680,6 +719,7 @@ const Home = ({ isEditMode = false }) => {
 
     if (!images.length) return null;
 
+    // Navegacao no carrossel
     const goPrev = () =>
       setIndex((prev) => (prev - 1 + images.length) % images.length);
     const goNext = () => setIndex((prev) => (prev + 1) % images.length);
@@ -746,6 +786,7 @@ const Home = ({ isEditMode = false }) => {
     );
   };
 
+  // Galeria simples sem carrossel
   const InlineGallery = ({ images = [], altPrefix = "Imagem" }) => {
     if (!images.length) return null;
     return (
@@ -766,9 +807,11 @@ const Home = ({ isEditMode = false }) => {
     );
   };
 
+  // Verifica se media e imagem
   const isImageMedia = (m) =>
     !m?.tipo || m.tipo === "imagem" || m.mime_type?.startsWith("image/");
 
+  // UI para selecionar e gerir fotos da galeria
   const renderMediaPicker = () => {
     const tabelaRef = getMediaTableForSection(editingSection);
     if (!tabelaRef) return null;
@@ -850,6 +893,7 @@ const Home = ({ isEditMode = false }) => {
     );
   };
 
+  // Adiciona destaque (subtitulo) em respostas/noticias
   const addRespostaDestaque = () => {
     setEditingData((prev) => {
       const current = normalizeRespostaDestaques(prev?.destaques);
@@ -861,6 +905,7 @@ const Home = ({ isEditMode = false }) => {
     });
   };
 
+  // Atualiza destaque especifico
   const updateRespostaDestaque = (index, field, value) => {
     setEditingData((prev) => {
       const current = normalizeRespostaDestaques(prev?.destaques);
@@ -871,6 +916,7 @@ const Home = ({ isEditMode = false }) => {
     });
   };
 
+  // Remove destaque
   const removeRespostaDestaque = (index) => {
     setEditingData((prev) => {
       const current = normalizeRespostaDestaques(prev?.destaques);
@@ -879,6 +925,7 @@ const Home = ({ isEditMode = false }) => {
     });
   };
 
+  // UI de edicao de destaques
   const renderRespostaDestaquesEditor = () => {
     // Agora funciona para respostas-sociais, noticias, conteudo institucional e secoes personalizadas
     const isAllowed =
@@ -952,7 +999,7 @@ const Home = ({ isEditMode = false }) => {
     );
   };
 
-  // Upload cover image (imagem_destaque) and set editingData.imagem_destaque
+  // Upload da imagem de capa e atualizacao do editingData
   const uploadCoverImage = async (file) => {
     try {
       const validation = await validateImageFile(file);
@@ -1018,8 +1065,9 @@ const Home = ({ isEditMode = false }) => {
     { id: "contactos", label: "Contactos" },
   ];
 
-  // Carregar configuração do hero da API (fallback para localStorage)
+  // Carregar configuracao do hero da API (fallback para localStorage)
   useEffect(() => {
+    // Carrega config do hero e aplica fallback local
     const loadHero = async () => {
       try {
         const response = await api.get("/hero");
@@ -1049,6 +1097,7 @@ const Home = ({ isEditMode = false }) => {
   }, []);
 
   // Buscar projetos da API
+  // Carrega projetos e normaliza imagens
   const fetchProjects = useCallback(async () => {
     try {
       setLoadingProjects(true);
@@ -1090,6 +1139,7 @@ const Home = ({ isEditMode = false }) => {
     ficheiro: null,
   });
 
+  // Carrega documentos de transparencia
   const fetchTransparencia = useCallback(async () => {
     try {
       setLoadingTransparencia(true);
@@ -1115,6 +1165,7 @@ const Home = ({ isEditMode = false }) => {
   }, [fetchTransparencia]);
 
   // Buscar conteúdo institucional
+  // Carrega conteudo institucional com media
   const fetchConteudo = useCallback(async () => {
     try {
       setLoadingContent(true);
@@ -1148,6 +1199,7 @@ const Home = ({ isEditMode = false }) => {
   }, [fetchConteudo]);
 
   // Buscar respostas sociais
+  // Carrega respostas sociais com media
   const fetchRespostas = useCallback(async () => {
     try {
       setLoadingRespostas(true);
@@ -1181,6 +1233,7 @@ const Home = ({ isEditMode = false }) => {
   }, [fetchRespostas]);
 
   // Buscar notícias
+  // Carrega noticias/eventos com media
   const fetchNoticias = useCallback(async () => {
     try {
       setLoadingNoticias(true);
@@ -1214,6 +1267,7 @@ const Home = ({ isEditMode = false }) => {
   }, [fetchNoticias]);
 
   // Buscar itens de uma seção específica
+  // Carrega itens de uma secao personalizada
   const fetchItensSecao = useCallback(
     async (secaoId) => {
       try {
@@ -1252,6 +1306,7 @@ const Home = ({ isEditMode = false }) => {
 
   // Buscar seções personalizadas
   useEffect(() => {
+    // Carrega secoes personalizadas e respetivos itens
     const fetchSecoesPersonalizadas = async () => {
       try {
         setLoadingSecoes(true);
@@ -1317,6 +1372,7 @@ const Home = ({ isEditMode = false }) => {
   }, [secoesPersonalizadas]);
 
   // Abrir modal de edição
+  // Abre modal de edicao para secao/elemento
   const handleEdit = async (
     section,
     data = {},
@@ -1347,7 +1403,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
-  // Adicionar nova subseção
+  // Adicionar nova subseccao
   const handleAddSubsection = (
     section = "instituicao",
     secaoPersonalizadaData = null,
@@ -1397,6 +1453,7 @@ const Home = ({ isEditMode = false }) => {
     setShowAddModal(true);
   };
 
+  // Abre modal de documentos de transparencia
   const goToTransparencyAdmin = () => {
     setTranspEditingDoc(null);
     setShowTranspModal(true);
@@ -1411,6 +1468,7 @@ const Home = ({ isEditMode = false }) => {
     });
   };
 
+  // Atualiza formulario de transparencia
   const handleTranspChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "ficheiro") {
@@ -1420,6 +1478,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  // Abre edicao de documento
   const handleTranspEdit = (doc) => {
     setTranspEditingDoc(doc);
     setShowTranspModal(true);
@@ -1434,6 +1493,7 @@ const Home = ({ isEditMode = false }) => {
     });
   };
 
+  // Submete documento de transparencia
   const handleTranspSubmit = async (e) => {
     e.preventDefault();
     setTranspError("");
@@ -1491,6 +1551,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  // Elimina documento de transparencia
   const handleTranspDelete = async (docId) => {
     const confirmed = window.confirm(
       "Tem a certeza que deseja eliminar este documento?",
@@ -1509,7 +1570,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
-  // Salvar nova subseção
+  // Salvar nova subseccao
   const handleSaveNew = async (e) => {
     e.preventDefault();
     try {
@@ -1601,7 +1662,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
-  // Eliminar subseção
+  // Eliminar subseccao
   const handleDelete = async (id, section, secaoId = null) => {
     const confirmed = await confirmAction(
       "Tem certeza que deseja eliminar este item?",
@@ -1635,7 +1696,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
-  // Funções de Drag and Drop
+  // Funcoes de Drag and Drop
   const handleDragStart = (e, item, section, secaoId = null) => {
     setDraggedItem(item);
     setDraggedSection(section);
@@ -1643,11 +1704,13 @@ const Home = ({ isEditMode = false }) => {
     e.dataTransfer.effectAllowed = "move";
   };
 
+  // Permite drop no destino
   const handleDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   };
 
+  // Aplica nova ordem via drag and drop
   const handleDrop = async (e, targetItem, section, secaoId = null) => {
     e.preventDefault();
     if (
@@ -1744,6 +1807,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  // Abre modal de noticia
   const openNews = async (noticia) => {
     lastFocusedRef.current = document.activeElement;
     try {
@@ -1775,6 +1839,7 @@ const Home = ({ isEditMode = false }) => {
     setShowNewsModal(true);
   };
 
+  // Abre modal de item personalizado
   const openCustomItem = async (item) => {
     lastFocusedRef.current = document.activeElement;
     try {
@@ -1790,6 +1855,7 @@ const Home = ({ isEditMode = false }) => {
     setShowCustomItemModal(true);
   };
 
+  // Abre modal de conteudo institucional
   const openInstitutional = async (item) => {
     lastFocusedRef.current = document.activeElement;
     try {
@@ -1801,6 +1867,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  // Abre modal de resposta social
   const openResposta = async (resposta) => {
     lastFocusedRef.current = document.activeElement;
     try {
@@ -1824,6 +1891,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  // Foca primeiro elemento focavel do modal
   const focusFirstElement = (ref) => {
     if (!ref?.current) return;
     const el = ref.current.querySelector(
@@ -1832,6 +1900,7 @@ const Home = ({ isEditMode = false }) => {
     if (el) el.focus();
   };
 
+  // Atalho Enter/Espaco para botoes
   const handleActionKeyDown = (event, action) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
@@ -1839,6 +1908,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  // Trata Escape e focus trap em modais
   const handleModalKeyDown = (event, modalRef, onClose) => {
     if (event.key === "Escape") {
       event.stopPropagation();
@@ -1864,22 +1934,27 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  // Confirmaacao com modal customizado
   const confirmAction = (message) =>
     new Promise((resolve) => {
       setConfirmState({ open: true, message, resolve });
     });
 
+  // Resolve confirmacao pendente
   const handleConfirm = (confirmed) => {
     if (confirmState.resolve) confirmState.resolve(confirmed);
     setConfirmState({ open: false, message: "", resolve: null });
   };
 
+  // Alert simples via toast
   const alert = (message) => toast(message);
 
+  // Define aviso de imagem por chave
   const setImageWarning = (key, message) => {
     setImageWarnings((prev) => ({ ...prev, [key]: message }));
   };
 
+  // Limpa aviso de imagem
   const clearImageWarning = (key) => {
     setImageWarnings((prev) => {
       if (!prev[key]) return prev;
@@ -1889,10 +1964,12 @@ const Home = ({ isEditMode = false }) => {
     });
   };
 
+  // Placeholder para limpar erros de formulario
   const clearFormError = (formKey, field) => {
     if (!field) return;
   };
 
+  // Placeholder para renderizar erros por campo
   const renderFieldError = () => null;
 
   useEffect(() => {
@@ -1943,6 +2020,7 @@ const Home = ({ isEditMode = false }) => {
     }
   }, [selectedResposta]);
 
+  // Fecha modal de edicao e repoe foco
   const closeEditModal = () => {
     setShowEditModal(false);
     resetMediaState();
@@ -1951,6 +2029,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  // Fecha modal de adicao e repoe foco
   const closeAddModal = () => {
     setShowAddModal(false);
     resetMediaState();
@@ -1959,6 +2038,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  // Fecha modal de noticias e repoe foco
   const closeNewsModal = () => {
     setShowNewsModal(false);
     if (lastFocusedRef.current) {
@@ -1966,7 +2046,7 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
-  // Salvar edição
+  // Salvar edicao
   const handleSave = async () => {
     try {
       if (
@@ -2086,6 +2166,7 @@ const Home = ({ isEditMode = false }) => {
     );
   });
 
+  // Resolve data de ordenacao de noticias
   const getNoticiaSortDate = (noticia) => {
     const value =
       noticia.data_criacao_original ||

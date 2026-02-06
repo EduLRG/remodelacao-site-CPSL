@@ -13,6 +13,7 @@ import SectionItemsManagement from "./SectionItemsManagement";
 import TransparencyManagement from "./TransparencyManagement";
 import "../styles/Dashboard.css";
 
+// Pagina de dashboard (menu admin + rotas internas)
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const Dashboard = () => {
   const [unreadInscriptions, setUnreadInscriptions] = useState(0);
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
 
+  // Carregar contadores de mensagens e inscricoes nao lidas
   useEffect(() => {
     const fetchUnread = async () => {
       try {
@@ -53,6 +55,7 @@ const Dashboard = () => {
     fetchUnread();
     fetchUnreadInscriptions();
     // listen to messages updates from Messages component
+    // Eventos para atualizar badges a partir de outras paginas
     const handler = (e) => {
       if (e && e.detail && typeof e.detail.unread === "number")
         setUnreadMessages(e.detail.unread);

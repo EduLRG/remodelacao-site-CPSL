@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { AccessibilityContext } from "../contexts/AccessibilityContext";
 import "../styles/AccessibilityBar.css";
 
+// Barra de atalhos de acessibilidade
 const AccessibilityBar = () => {
   const {
     fontSize,
@@ -16,10 +17,18 @@ const AccessibilityBar = () => {
       className="accessibility-bar compact"
       aria-label="Atalhos de acessibilidade"
     >
-      <button type="button" onClick={decreaseFontSize} title="Diminuir tamanho da letra">
+      <button
+        type="button"
+        onClick={decreaseFontSize}
+        title="Diminuir tamanho da letra"
+      >
         A-
       </button>
-      <button type="button" onClick={increaseFontSize} title="Aumentar tamanho da letra">
+      <button
+        type="button"
+        onClick={increaseFontSize}
+        title="Aumentar tamanho da letra"
+      >
         A+
       </button>
       <button

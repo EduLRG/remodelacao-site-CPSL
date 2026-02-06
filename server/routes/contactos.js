@@ -4,13 +4,15 @@ const { body, validationResult } = require("express-validator");
 const pool = require("../config/database");
 const nodemailer = require("nodemailer");
 
+// Rotas publicas para contactos e formulario
+
 // @route   GET /api/contactos
 // @desc    Obter todos os contactos
 // @access  Public
 router.get("/", async (req, res) => {
   try {
     const [contactos] = await pool.query(
-      "SELECT * FROM contactos_institucionais WHERE ativo = true ORDER BY ordem ASC"
+      "SELECT * FROM contactos_institucionais WHERE ativo = true ORDER BY ordem ASC",
     );
 
     res.json({
@@ -49,32 +51,44 @@ router.post(
 
       const { nome, email, assunto, mensagem } = req.body;
 
-      // log for debugging duplicate submissions
-      console.log('[contactos] new submission:', { nome, email, assunto });
+      // log para diagnosticar submissoes duplicadas
+      console.log("[contactos] new submission:", { nome, email, assunto });
 
-      // Prevent duplicate submissions: if an identical message was submitted in the last 60 seconds, ignore
+      // Evitar duplicados: ignora se houve mensagem identica nos ultimos 60s
       try {
         const checkSql = `SELECT COUNT(*) as cnt FROM form_contacto WHERE nome = $1 AND email = $2 AND assunto = $3 AND mensagem = $4 AND data_submissao >= NOW() - INTERVAL '60 seconds'`;
-        const [rows] = await pool.query(checkSql, [nome, email, assunto, mensagem]);
+        const [rows] = await pool.query(checkSql, [
+          nome,
+          email,
+          assunto,
+          mensagem,
+        ]);
         const cnt = parseInt(rows[0]?.cnt || rows.cnt || 0, 10);
         if (cnt > 0) {
-          console.warn('[contactos] duplicate submission detected within 60s - ignoring insert');
-          return res.status(200).json({ success: true, message: 'Mensagem recebida (duplicado detectado).' });
+          console.warn(
+            "[contactos] duplicate submission detected within 60s - ignoring insert",
+          );
+          return res
+            .status(200)
+            .json({
+              success: true,
+              message: "Mensagem recebida (duplicado detectado).",
+            });
         }
       } catch (checkErr) {
-        console.error('[contactos] duplicate check failed:', checkErr);
-        // continue to insert if check failed
+        console.error("[contactos] duplicate check failed:", checkErr);
+        // continua a inserir caso o check falhe
       }
 
       // Inserir na base de dados
       await pool.query(
         "INSERT INTO form_contacto (nome, email, assunto, mensagem) VALUES ($1, $2, $3, $4)",
-        [nome, email, assunto, mensagem]
+        [nome, email, assunto, mensagem],
       );
 
       // Enviar email de notificação (opcional) — feito de forma segura via util
       try {
-        const { sendMailSafe } = require('../utils/email');
+        const { sendMailSafe } = require("../utils/email");
         const mail = {
           from: process.env.EMAIL_FROM,
           to: process.env.EMAIL_FROM,
@@ -90,10 +104,18 @@ router.post(
         };
         const result = await sendMailSafe(mail);
         if (!result.ok) {
-          console.warn('Notificação por email não enviada:', result.error && result.error.message ? result.error.message : result.error);
+          console.warn(
+            "Notificação por email não enviada:",
+            result.error && result.error.message
+              ? result.error.message
+              : result.error,
+          );
         }
       } catch (emailError) {
-        console.error('Erro ao tentar enviar notificação por email (unexpected):', emailError);
+        console.error(
+          "Erro ao tentar enviar notificação por email (unexpected):",
+          emailError,
+        );
       }
 
       res.status(201).json({
@@ -108,7 +130,7 @@ router.post(
         message: "Erro no servidor.",
       });
     }
-  }
+  },
 );
 
 module.exports = router;

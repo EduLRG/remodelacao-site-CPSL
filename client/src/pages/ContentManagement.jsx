@@ -3,6 +3,7 @@
 
 import React from "react";
 
+// Pagina descontinuada (mantida por compatibilidade)
 const ContentManagement = () => {
   return (
     <div style={{ padding: "40px", textAlign: "center" }}>

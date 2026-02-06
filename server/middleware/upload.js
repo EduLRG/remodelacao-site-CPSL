@@ -5,20 +5,20 @@ const { v2: cloudinary } = require("cloudinary");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const { createClient } = require("@supabase/supabase-js");
 
+// Flags para escolher provider de uploads
 const useSupabase =
   !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
-const SUPABASE_BUCKET =
-  process.env.SUPABASE_STORAGE_BUCKET || "uploads";
+const SUPABASE_BUCKET = process.env.SUPABASE_STORAGE_BUCKET || "uploads";
 let supabase;
 
 if (useSupabase) {
   supabase = createClient(
     process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
   );
 }
 
-// Detectar se devemos usar Cloudinary (produção) ou disco (dev/self-hosted)
+// Detectar se devemos usar Cloudinary (producao) ou disco (dev/self-hosted)
 const useCloudinary =
   !useSupabase &&
   (!!process.env.CLOUDINARY_URL ||
@@ -26,10 +26,11 @@ const useCloudinary =
       process.env.CLOUDINARY_API_KEY &&
       process.env.CLOUDINARY_API_SECRET));
 
+// Storage do multer (memoria, cloudinary ou disco)
 let storage;
 
 if (useSupabase) {
-  // Guardar em memória para subir para Supabase Storage
+  // Guardar em memoria para subir para Supabase Storage
   storage = multer.memoryStorage();
 } else if (useCloudinary) {
   // Config via CLOUDINARY_URL (recomendado) ou pelos componentes individuais
@@ -46,15 +47,25 @@ if (useSupabase) {
   storage = new CloudinaryStorage({
     cloudinary,
     params: async (req, file) => {
-      const allowed = ["jpg", "jpeg", "png", "gif", "webp", "mp4", "mov", "mpeg", "pdf"];
+      const allowed = [
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "webp",
+        "mp4",
+        "mov",
+        "mpeg",
+        "pdf",
+      ];
       const ext = (file.originalname.split(".").pop() || "").toLowerCase();
       const folder = file.mimetype.startsWith("image/")
         ? "imagens"
         : file.mimetype.startsWith("video/")
-        ? "videos"
-        : file.mimetype === "application/pdf"
-        ? "pdfs"
-        : "outros";
+          ? "videos"
+          : file.mimetype === "application/pdf"
+            ? "pdfs"
+            : "outros";
 
       return {
         folder: process.env.CLOUDINARY_FOLDER || "cpsl/uploads/" + folder,
@@ -97,7 +108,7 @@ if (useSupabase) {
   });
 }
 
-// Filtro de ficheiros (aplicado só no disco; Cloudinary valida tipos pelo resource_type auto)
+// Filtro de ficheiros (aplicado so no disco; Cloudinary valida tipos pelo resource_type auto)
 const fileFilter = (req, file, cb) => {
   const allowedTypes = [
     "image/jpeg",
@@ -116,9 +127,9 @@ const fileFilter = (req, file, cb) => {
   } else {
     cb(
       new Error(
-        "Tipo de ficheiro não permitido. Apenas imagens, vídeos e PDFs são aceites."
+        "Tipo de ficheiro não permitido. Apenas imagens, vídeos e PDFs são aceites.",
       ),
-      false
+      false,
     );
   }
 };
@@ -131,12 +142,12 @@ const upload = multer({
   },
 });
 
-// Função auxiliar para enviar para Supabase Storage
+// Funcao auxiliar para enviar para Supabase Storage
 async function uploadToSupabase(file) {
   if (!useSupabase || !supabase || !file || !file.buffer) return null;
 
   const path = `${Date.now()}-${Math.round(Math.random() * 1e9)}${pathExt(
-    file.originalname
+    file.originalname,
   )}`;
   const { data, error } = await supabase.storage
     .from(SUPABASE_BUCKET)
@@ -159,6 +170,7 @@ async function uploadToSupabase(file) {
   };
 }
 
+// Extrai extensao do ficheiro (inclui ponto)
 function pathExt(filename) {
   const ext = path.extname(filename || "");
   return ext || "";

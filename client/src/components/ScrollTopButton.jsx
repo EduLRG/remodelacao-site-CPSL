@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import "../styles/ScrollTopButton.css";
 
+// Botao flutuante para voltar ao topo
 const ScrollTopButton = () => {
   const [visible, setVisible] = useState(false);
 
+  // Mostra o botao apos scroll
   useEffect(() => {
     const onScroll = () => {
       setVisible(window.scrollY > 250);
@@ -12,6 +14,7 @@ const ScrollTopButton = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Scroll suave para o topo
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };

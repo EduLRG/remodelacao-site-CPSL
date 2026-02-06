@@ -3,6 +3,8 @@ const router = express.Router();
 const pool = require("../config/database");
 const { authenticate, isAdminOrGestor } = require("../middleware/auth");
 
+// Rotas de respostas sociais
+
 // GET - Obter todas as respostas sociais
 router.get("/", async (req, res) => {
   try {
@@ -23,7 +25,7 @@ router.get("/:id", async (req, res) => {
   try {
     const [respostas] = await pool.query(
       "SELECT * FROM respostas_sociais WHERE id = $1",
-      [req.params.id]
+      [req.params.id],
     );
     if (respostas.length === 0) {
       return res
@@ -33,7 +35,7 @@ router.get("/:id", async (req, res) => {
 
     const [media] = await pool.query(
       "SELECT * FROM media WHERE tabela_referencia = $1 AND id_referencia = $2 ORDER BY ordem ASC",
-      ["respostas_sociais", req.params.id]
+      ["respostas_sociais", req.params.id],
     );
 
     res.json({ success: true, data: { ...respostas[0], media } });
@@ -77,7 +79,7 @@ router.post("/", [authenticate, isAdminOrGestor], async (req, res) => {
         ativo ?? true,
         ordem || 0,
         req.user.id,
-      ]
+      ],
     );
 
     res.status(201).json({
@@ -127,9 +129,9 @@ router.put("/:id", [authenticate, isAdminOrGestor], async (req, res) => {
     values.push(req.params.id);
     await pool.query(
       `UPDATE respostas_sociais SET ${updates.join(
-        ", "
+        ", ",
       )} WHERE id = $${paramIndex}`,
-      values
+      values,
     );
 
     res.json({
@@ -146,7 +148,7 @@ router.delete("/:id", [authenticate, isAdminOrGestor], async (req, res) => {
   try {
     await pool.query(
       "DELETE FROM media WHERE tabela_referencia = $1 AND id_referencia = $2",
-      ["respostas_sociais", req.params.id]
+      ["respostas_sociais", req.params.id],
     );
     await pool.query("DELETE FROM respostas_sociais WHERE id = $1", [
       req.params.id,

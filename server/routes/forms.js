@@ -4,7 +4,9 @@ const pool = require("../config/database");
 
 const router = express.Router();
 
-// Util: executa transação
+// Rotas de inscricoes (ERPI, Centro de Dia, SAD, Creche)
+
+// Util: executa transacao com BEGIN/COMMIT/ROLLBACK
 const withTransaction = async (fn) => {
   const client = await pool.connect();
   try {
@@ -20,7 +22,7 @@ const withTransaction = async (fn) => {
   }
 };
 
-// SELECT helpers
+// Helpers de filtro para listagens
 const buildLidoFilter = (lido) => {
   if (lido === "false") return "(i.lido = false OR i.lido IS NULL)";
   if (lido === "true") return "i.lido = true";
@@ -60,7 +62,7 @@ router.get("/erpi", async (req, res) => {
        JOIN pessoas p ON p.id = i.pessoa_id
        LEFT JOIN contactos_emergencia ce ON ce.pessoa_id = p.id
        WHERE i.servico = 'ERPI' AND ${filter}
-       ORDER BY i.data_inscricao DESC`
+       ORDER BY i.data_inscricao DESC`,
     );
     res.json({ success: true, data: rows });
   } catch (error) {
@@ -102,7 +104,7 @@ router.get("/centro-de-dia", async (req, res) => {
        JOIN pessoas p ON p.id = i.pessoa_id
        LEFT JOIN contactos_emergencia ce ON ce.pessoa_id = p.id
        WHERE i.servico = 'CENTRO_DIA' AND ${filter}
-       ORDER BY i.data_inscricao DESC`
+       ORDER BY i.data_inscricao DESC`,
     );
     res.json({ success: true, data: rows });
   } catch (error) {
@@ -157,7 +159,7 @@ router.get("/sad", async (req, res) => {
        LEFT JOIN contactos_emergencia ce ON ce.pessoa_id = p.id
        LEFT JOIN detalhes_sad ds ON ds.inscricao_id = i.id
        WHERE i.servico = 'SAD' AND ${filter}
-       ORDER BY i.data_inscricao DESC`
+       ORDER BY i.data_inscricao DESC`,
     );
     res.json({ success: true, data: rows });
   } catch (error) {
@@ -215,7 +217,7 @@ router.get("/creche", async (req, res) => {
        JOIN pessoas p ON p.id = i.pessoa_id
        LEFT JOIN detalhes_creche dc ON dc.inscricao_id = i.id
        WHERE i.servico = 'CRECHE' AND ${filter}
-       ORDER BY i.data_inscricao DESC`
+       ORDER BY i.data_inscricao DESC`,
     );
     res.json({ success: true, data: rows });
   } catch (error) {
@@ -246,9 +248,9 @@ router.post(
         data_nascimento,
         morada_completa,
         codigo_postal,
-  localidade,
-  concelho,
-  distrito,
+        localidade,
+        concelho,
+        distrito,
         cc_bi_numero,
         nif,
         niss,
@@ -279,7 +281,7 @@ router.post(
             localidadeVal,
             concelho || null,
             distrito || null,
-          ]
+          ],
         );
 
         const pessoaId = pessoa.rows[0].id;
@@ -293,7 +295,7 @@ router.post(
             contacto_telefone,
             contacto_email,
             contacto_parentesco,
-          ]
+          ],
         );
 
         await client.query(
@@ -305,16 +307,18 @@ router.post(
             req.body.origem_submissao || null,
             req.body.secao_personalizada_id || null,
             req.body.formulario_escolhido || null,
-          ]
+          ],
         );
       });
 
-      res.status(201).json({ success: true, message: "Inscrição ERPI recebida." });
+      res
+        .status(201)
+        .json({ success: true, message: "Inscrição ERPI recebida." });
     } catch (error) {
       console.error("Erro ao guardar inscrição ERPI:", error);
       res.status(500).json({ success: false, message: "Erro no servidor." });
     }
-  }
+  },
 );
 
 // POST CENTRO DE DIA
@@ -339,9 +343,9 @@ router.post(
         data_nascimento,
         morada_completa,
         codigo_postal,
-  localidade,
-  concelho,
-  distrito,
+        localidade,
+        concelho,
+        distrito,
         cc_bi_numero,
         nif,
         niss,
@@ -372,7 +376,7 @@ router.post(
             localidadeVal,
             concelho || null,
             distrito || null,
-          ]
+          ],
         );
 
         const pessoaId = pessoa.rows[0].id;
@@ -386,7 +390,7 @@ router.post(
             contacto_telefone,
             contacto_email,
             contacto_parentesco,
-          ]
+          ],
         );
 
         await client.query(
@@ -398,16 +402,18 @@ router.post(
             req.body.origem_submissao || null,
             req.body.secao_personalizada_id || null,
             req.body.formulario_escolhido || null,
-          ]
+          ],
         );
       });
 
-      res.status(201).json({ success: true, message: "Inscrição Centro de Dia recebida." });
+      res
+        .status(201)
+        .json({ success: true, message: "Inscrição Centro de Dia recebida." });
     } catch (error) {
       console.error("Erro ao guardar inscrição Centro de Dia:", error);
       res.status(500).json({ success: false, message: "Erro no servidor." });
     }
-  }
+  },
 );
 
 // POST SAD
@@ -456,9 +462,9 @@ router.post(
         data_nascimento,
         morada_completa,
         codigo_postal,
-  localidade,
-  concelho,
-  distrito,
+        localidade,
+        concelho,
+        distrito,
         cc_bi_numero,
         nif,
         niss,
@@ -501,7 +507,7 @@ router.post(
             localidadeVal,
             concelho || null,
             distrito || null,
-          ]
+          ],
         );
 
         const pessoaId = pessoa.rows[0].id;
@@ -515,7 +521,7 @@ router.post(
             contacto_telefone,
             contacto_email,
             contacto_parentesco,
-          ]
+          ],
         );
 
         const inscr = await client.query(
@@ -528,7 +534,7 @@ router.post(
             req.body.origem_submissao || null,
             req.body.secao_personalizada_id || null,
             req.body.formulario_escolhido || null,
-          ]
+          ],
         );
 
         const inscId = inscr.rows[0].id;
@@ -563,16 +569,18 @@ router.post(
             Boolean(tratamento_roupa),
             periodicidade_tratamento_roupa || null,
             vezes_tratamento_roupa || null,
-          ]
+          ],
         );
       });
 
-      res.status(201).json({ success: true, message: "Inscrição SAD recebida." });
+      res
+        .status(201)
+        .json({ success: true, message: "Inscrição SAD recebida." });
     } catch (error) {
       console.error("Erro ao guardar inscrição SAD:", error);
       res.status(500).json({ success: false, message: "Erro no servidor." });
     }
-  }
+  },
 );
 
 // POST CRECHE
@@ -586,13 +594,17 @@ router.post(
     body("crianca_nasceu").isBoolean(),
     body("data_nascimento").custom((value, { req }) => {
       if (String(req.body.crianca_nasceu) === "true" && !value) {
-        throw new Error("Data de nascimento é obrigatória quando a criança já nasceu.");
+        throw new Error(
+          "Data de nascimento é obrigatória quando a criança já nasceu.",
+        );
       }
       return true;
     }),
     body("data_prevista").custom((value, { req }) => {
       if (String(req.body.crianca_nasceu) === "false" && !value) {
-        throw new Error("Data prevista é obrigatória quando a criança ainda não nasceu.");
+        throw new Error(
+          "Data prevista é obrigatória quando a criança ainda não nasceu.",
+        );
       }
       return true;
     }),
@@ -656,7 +668,7 @@ router.post(
             morada,
             codigo_postal,
             localidade,
-          ]
+          ],
         );
 
         const pessoaId = pessoa.rows[0].id;
@@ -672,7 +684,7 @@ router.post(
             req.body.formulario_escolhido || null,
             creche_opcao || null,
             creche_item_id ? Number(creche_item_id) : null,
-          ]
+          ],
         );
 
         const inscId = insc.rows[0].id;
@@ -729,49 +741,74 @@ router.post(
             pai_localidade || null,
             pai_telemovel || null,
             pai_email || null,
-          ]
+          ],
         );
       });
 
-      res.status(201).json({ success: true, message: "Inscrição Creche recebida." });
+      res
+        .status(201)
+        .json({ success: true, message: "Inscrição Creche recebida." });
     } catch (error) {
       console.error("Erro ao guardar inscrição Creche:", error);
       res.status(500).json({ success: false, message: "Erro no servidor." });
     }
-  }
+  },
 );
 
 // MARCAR COMO LIDO (todas usam inscricoes)
-router.put(["/erpi/:id/read", "/centro-de-dia/:id/read", "/sad/:id/read", "/creche/:id/read"], async (req, res) => {
-  try {
-    await pool.query(`UPDATE inscricoes SET lido = true, lido_em = NOW() WHERE id = $1`, [req.params.id]);
-    res.json({ success: true });
-  } catch (error) {
-    console.error("Erro ao marcar inscrição como lida:", error);
-    res.status(500).json({ success: false, message: "Erro no servidor." });
-  }
-});
+router.put(
+  [
+    "/erpi/:id/read",
+    "/centro-de-dia/:id/read",
+    "/sad/:id/read",
+    "/creche/:id/read",
+  ],
+  async (req, res) => {
+    try {
+      await pool.query(
+        `UPDATE inscricoes SET lido = true, lido_em = NOW() WHERE id = $1`,
+        [req.params.id],
+      );
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Erro ao marcar inscrição como lida:", error);
+      res.status(500).json({ success: false, message: "Erro no servidor." });
+    }
+  },
+);
 
-// DELETE genérico: remove inscrição e, se não houver mais inscrições da pessoa, remove pessoa/contatos
-router.delete(["/erpi/:id", "/centro-de-dia/:id", "/sad/:id", "/creche/:id"], async (req, res) => {
-  const id = req.params.id;
-  try {
-    await withTransaction(async (client) => {
-      const insc = await client.query(`DELETE FROM inscricoes WHERE id = $1 RETURNING pessoa_id`, [id]);
-      const pessoaId = insc.rows[0]?.pessoa_id;
-      if (!pessoaId) return;
+// DELETE generico: remove inscricao e, se nao houver mais inscricoes da pessoa, remove pessoa/contatos
+router.delete(
+  ["/erpi/:id", "/centro-de-dia/:id", "/sad/:id", "/creche/:id"],
+  async (req, res) => {
+    const id = req.params.id;
+    try {
+      await withTransaction(async (client) => {
+        const insc = await client.query(
+          `DELETE FROM inscricoes WHERE id = $1 RETURNING pessoa_id`,
+          [id],
+        );
+        const pessoaId = insc.rows[0]?.pessoa_id;
+        if (!pessoaId) return;
 
-      const remaining = await client.query(`SELECT 1 FROM inscricoes WHERE pessoa_id = $1 LIMIT 1`, [pessoaId]);
-      if (remaining.rowCount === 0) {
-        await client.query(`DELETE FROM contactos_emergencia WHERE pessoa_id = $1`, [pessoaId]);
-        await client.query(`DELETE FROM pessoas WHERE id = $1`, [pessoaId]);
-      }
-    });
-    res.json({ success: true });
-  } catch (error) {
-    console.error("Erro ao eliminar inscrição:", error);
-    res.status(500).json({ success: false, message: "Erro no servidor." });
-  }
-});
+        const remaining = await client.query(
+          `SELECT 1 FROM inscricoes WHERE pessoa_id = $1 LIMIT 1`,
+          [pessoaId],
+        );
+        if (remaining.rowCount === 0) {
+          await client.query(
+            `DELETE FROM contactos_emergencia WHERE pessoa_id = $1`,
+            [pessoaId],
+          );
+          await client.query(`DELETE FROM pessoas WHERE id = $1`, [pessoaId]);
+        }
+      });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Erro ao eliminar inscrição:", error);
+      res.status(500).json({ success: false, message: "Erro no servidor." });
+    }
+  },
+);
 
 module.exports = router;

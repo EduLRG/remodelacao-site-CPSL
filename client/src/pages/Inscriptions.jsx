@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../styles/Inscriptions.css";
 
+// Pagina de gestao de inscricoes por servico
+
 const FORM_ENDPOINTS = {
   erpi: "/forms/erpi",
   centro_de_dia: "/forms/centro-de-dia",
@@ -35,6 +37,7 @@ const Inscriptions = () => {
     direction: "desc",
   });
 
+  // Dispara evento global com contagem de nao lidas
   const dispatchUnread = (list) => {
     const unread = list.filter((it) => !it.lido).length;
     try {
@@ -47,6 +50,7 @@ const Inscriptions = () => {
     }
   };
 
+  // Recalcula total de nao lidas em todos os tipos
   const fetchUnreadTotals = useCallback(async () => {
     try {
       let total = 0;
@@ -63,6 +67,7 @@ const Inscriptions = () => {
     }
   }, []);
 
+  // Carrega inscricoes do tipo selecionado
   const fetchItems = useCallback(
     async (type = selectedType) => {
       try {
@@ -93,6 +98,7 @@ const Inscriptions = () => {
     fetchItems(selectedType);
   }, [fetchItems, selectedType]);
 
+  // Abre detalhe e marca como lida
   const openInscription = async (it) => {
     setSelected(it);
     const list = itemsByType[selectedType] || [];
@@ -116,6 +122,7 @@ const Inscriptions = () => {
     }
   };
 
+  // Elimina inscricao e atualiza contadores
   const handleDelete = async (id) => {
     if (!window.confirm("Eliminar esta inscrição?")) return;
     try {
@@ -133,9 +140,11 @@ const Inscriptions = () => {
     }
   };
 
+  // Formata data e hora
   const formatDate = (d) =>
     d ? new Date(d).toLocaleString("pt-PT") : "(sem data)";
 
+  // Formata apenas data (respeita YYYY-MM-DD)
   const formatDateOnly = (d) => {
     if (!d) return "(não indicado)";
     // handle plain date (YYYY-MM-DD) without timezone shifts
@@ -149,7 +158,7 @@ const Inscriptions = () => {
 
   const items = itemsByType[selectedType] || [];
 
-  // Função para ordenar ao clicar no cabeçalho
+  // Funcao para ordenar ao clicar no cabecalho
   const handleSort = (key) => {
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {

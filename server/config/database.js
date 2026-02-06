@@ -1,7 +1,7 @@
 const { Pool } = require("pg");
 require("dotenv").config();
 
-// Criar pool de conexões PostgreSQL (Supabase)
+// Criar pool de conexoes PostgreSQL (Supabase)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -12,12 +12,12 @@ const pool = new Pool({
   connectionTimeoutMillis: 15000, // 15 segundos para melhor estabilidade
 });
 
-// Testar conexão
+// Testar conexao na inicializacao
 const testConnection = async () => {
   try {
     const client = await pool.connect();
     console.log(
-      "✅ Conexão à base de dados PostgreSQL (Supabase) estabelecida com sucesso!"
+      "✅ Conexão à base de dados PostgreSQL (Supabase) estabelecida com sucesso!",
     );
     client.release();
   } catch (error) {
@@ -29,7 +29,7 @@ const testConnection = async () => {
 
 testConnection();
 
-// Wrapper para compatibilidade MySQL → PostgreSQL
+// Wrapper para compatibilidade MySQL -> PostgreSQL
 const originalQuery = pool.query.bind(pool);
 pool.query = async function (text, params) {
   try {
@@ -54,14 +54,14 @@ pool.query = async function (text, params) {
       .replace(/FROM\s+Transparencia/gi, "FROM transparencia")
       .replace(
         /FROM\s+Contactos_Institucionais/gi,
-        "FROM contactos_institucionais"
+        "FROM contactos_institucionais",
       )
       .replace(/UPDATE\s+Utilizadores/gi, "UPDATE utilizadores")
       .replace(/UPDATE\s+Projetos/gi, "UPDATE projetos")
       .replace(/UPDATE\s+Media/gi, "UPDATE media")
       .replace(
         /UPDATE\s+Conteudo_Institucional/gi,
-        "UPDATE conteudo_institucional"
+        "UPDATE conteudo_institucional",
       )
       .replace(/UPDATE\s+Noticias_Eventos/gi, "UPDATE noticias_eventos")
       .replace(/UPDATE\s+Respostas_Sociais/gi, "UPDATE respostas_sociais")
@@ -77,11 +77,11 @@ pool.query = async function (text, params) {
       .replace(/DELETE\s+FROM\s+Transparencia/gi, "DELETE FROM transparencia")
       .replace(
         /DELETE\s+FROM\s+Respostas_Sociais/gi,
-        "DELETE FROM respostas_sociais"
+        "DELETE FROM respostas_sociais",
       )
       .replace(
         /DELETE\s+FROM\s+Noticias_Eventos/gi,
-        "DELETE FROM noticias_eventos"
+        "DELETE FROM noticias_eventos",
       )
       // Converter booleanos
       .replace(/=\s*TRUE\b/gi, "= true")

@@ -3,6 +3,8 @@ const router = express.Router();
 const pool = require("../config/database");
 const { authenticate, isAdminOrGestor } = require("../middleware/auth");
 
+// Rotas de secoes personalizadas e itens
+
 // GET - Obter todas as seções personalizadas ativas
 router.get("/", async (req, res) => {
   try {

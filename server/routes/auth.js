@@ -6,6 +6,8 @@ const { body, validationResult } = require("express-validator");
 const pool = require("../config/database");
 const { authenticate, isAdmin } = require("../middleware/auth");
 
+// Rotas de autenticacao e gestao de credenciais
+
 // @route   POST /api/auth/login
 // @desc    Login de utilizador
 // @access  Public
@@ -30,7 +32,7 @@ router.post(
       // Verificar se utilizador existe
       const [users] = await pool.query(
         "SELECT * FROM utilizadores WHERE email = $1 AND ativo = true",
-        [email]
+        [email],
       );
 
       if (users.length === 0) {
@@ -59,7 +61,7 @@ router.post(
           tipo: user.tipo,
         },
         process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRE || "7d" }
+        { expiresIn: process.env.JWT_EXPIRE || "7d" },
       );
 
       res.json({
@@ -79,7 +81,7 @@ router.post(
         message: "Erro no servidor.",
       });
     }
-  }
+  },
 );
 
 // @route   GET /api/auth/me
@@ -121,7 +123,7 @@ router.post(
       // Obter password atual da BD
       const [users] = await pool.query(
         "SELECT password_hash FROM Utilizadores WHERE id = ?",
-        [req.user.id]
+        [req.user.id],
       );
 
       if (users.length === 0) {
@@ -134,7 +136,7 @@ router.post(
       // Verificar password atual
       const isMatch = await bcrypt.compare(
         currentPassword,
-        users[0].password_hash
+        users[0].password_hash,
       );
       if (!isMatch) {
         return res.status(401).json({
@@ -150,7 +152,7 @@ router.post(
       // Atualizar password
       await pool.query(
         "UPDATE Utilizadores SET password_hash = ? WHERE id = ?",
-        [hashedPassword, req.user.id]
+        [hashedPassword, req.user.id],
       );
 
       res.json({
@@ -164,7 +166,7 @@ router.post(
         message: "Erro no servidor.",
       });
     }
-  }
+  },
 );
 
 module.exports = router;

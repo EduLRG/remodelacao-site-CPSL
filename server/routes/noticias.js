@@ -3,6 +3,8 @@ const router = express.Router();
 const pool = require("../config/database");
 const { authenticate, isAdminOrGestor } = require("../middleware/auth");
 
+// Rotas de noticias e eventos
+
 // GET - Obter todas as notícias/eventos
 router.get("/", async (req, res) => {
   try {

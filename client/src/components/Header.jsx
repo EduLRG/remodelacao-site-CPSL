@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import "../styles/Header.css";
 import logo from "../img/logo.png";
 
+// Header com menu, scroll suave e suporte a modo de edicao
 const Header = ({ sections = [], customSections = [], isEditMode = false }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -45,6 +46,7 @@ const Header = ({ sections = [], customSections = [], isEditMode = false }) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Click em item do menu (scroll suave ou navegacao)
   const handleNavClick = (e, sectionId) => {
     e.preventDefault();
     setIsMobileMenuOpen(false);
@@ -88,6 +90,7 @@ const Header = ({ sections = [], customSections = [], isEditMode = false }) => {
     }
   };
 
+  // Scroll para o topo, respeitando modo de edicao
   const scrollToTop = (e) => {
     e.preventDefault();
     setIsMobileMenuOpen(false);

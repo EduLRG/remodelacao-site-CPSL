@@ -5,6 +5,7 @@ import { AuthContext } from "../contexts/AuthContext";
 import api from "../services/api";
 import "../styles/Dashboard.css";
 
+// Pagina de gestao de secoes personalizadas
 function CustomSectionsManagement() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
@@ -23,10 +24,12 @@ function CustomSectionsManagement() {
     { id: "sad", label: "Inscrição SAD" },
     { id: "creche", label: "Inscrição Creche" },
   ];
+  // Resolve label humano para o tipo de formulario
   const labelForFormType = (tipo) => {
     const found = FORM_TYPES.find((t) => t.id === tipo);
     return found ? found.label : tipo?.toUpperCase() || "Formulário";
   };
+  // Normaliza lista de opcoes de formulario para o formato interno
   const normalizeFormOptions = (opcoes = [], prefix = "opt") => {
     return opcoes.map((opt, idx) => {
       const tipo = opt?.tipo || opt?.id || opt?.value || opt || "contacto";
@@ -50,6 +53,7 @@ function CustomSectionsManagement() {
     formulario_descricao: "",
   });
 
+  // Faz parse de config_formulario (string JSON ou objeto)
   const parseFormConfig = (config) => {
     if (!config) return null;
     if (typeof config === "object") return config;
@@ -61,6 +65,7 @@ function CustomSectionsManagement() {
     }
   };
 
+  // Confirmacao com toast antes de operacoes destrutivas
   const confirmAction = (message) =>
     new Promise((resolve) => {
       toast(
@@ -95,6 +100,7 @@ function CustomSectionsManagement() {
       );
     });
 
+  // Validar user e carregar secoes
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -103,6 +109,7 @@ function CustomSectionsManagement() {
     fetchSecoes();
   }, [user, navigate]);
 
+  // Carregar secoes do backend
   const fetchSecoes = async () => {
     try {
       setLoading(true);
@@ -118,6 +125,7 @@ function CustomSectionsManagement() {
     }
   };
 
+  // Abre modal para criar/editar secao
   const handleOpenModal = (secao = null) => {
     if (secao) {
       setEditingSecao(secao);
@@ -161,6 +169,7 @@ function CustomSectionsManagement() {
     setShowModal(true);
   };
 
+  // Submete criacao/edicao de secao
   const handleSubmit = async (e) => {
     e.preventDefault();
     const {
@@ -222,16 +231,19 @@ function CustomSectionsManagement() {
     }
   };
 
+  // Inicia drag para reordenar secoes
   const handleDragStart = (e, secao) => {
     setDraggedItem(secao);
     e.dataTransfer.effectAllowed = "move";
   };
 
+  // Permite drop durante drag
   const handleDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   };
 
+  // Aplica nova ordem no drop
   const handleDrop = async (e, targetSecao) => {
     e.preventDefault();
     if (!draggedItem || draggedItem.id === targetSecao.id) {
@@ -252,7 +264,7 @@ function CustomSectionsManagement() {
         api.put(`/secoes-personalizadas/${secao.id}`, {
           ...secao,
           ordem: index + 1,
-        })
+        }),
       );
 
       await Promise.all(updatePromises);
@@ -265,6 +277,7 @@ function CustomSectionsManagement() {
     }
   };
 
+  // Elimina secao (soft delete no backend)
   const handleDelete = async (id) => {
     const confirmed = await confirmAction(
       "Tem certeza que deseja eliminar esta seção?",
@@ -280,6 +293,7 @@ function CustomSectionsManagement() {
     }
   };
 
+  // Gera slug a partir do titulo
   const handleGenerateSlug = () => {
     const slug = formData.titulo
       .toLowerCase()
@@ -290,6 +304,7 @@ function CustomSectionsManagement() {
     setFormData({ ...formData, slug });
   };
 
+  // Adiciona opcao de formulario (modo multiple)
   const handleAddFormOption = () => {
     setFormData((prev) => ({
       ...prev,
@@ -304,15 +319,17 @@ function CustomSectionsManagement() {
     }));
   };
 
+  // Atualiza opcao de formulario
   const handleUpdateFormOption = (id, field, value) => {
     setFormData((prev) => ({
       ...prev,
       formulario_opcoes: prev.formulario_opcoes.map((opt) =>
-        opt.id === id ? { ...opt, [field]: value } : opt
+        opt.id === id ? { ...opt, [field]: value } : opt,
       ),
     }));
   };
 
+  // Remove opcao de formulario
   const handleRemoveFormOption = (id) => {
     setFormData((prev) => ({
       ...prev,
@@ -955,7 +972,7 @@ function CustomSectionsManagement() {
                               handleUpdateFormOption(
                                 opt.id,
                                 "tipo",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                           >
@@ -972,7 +989,7 @@ function CustomSectionsManagement() {
                               handleUpdateFormOption(
                                 opt.id,
                                 "label",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             placeholder="Rótulo visível para o utilizador"

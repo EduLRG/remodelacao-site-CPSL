@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
 import "../styles/Login.css";
 
+// Pagina de login da area administrativa
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -11,6 +12,7 @@ const Login = () => {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  // Submete credenciais e redireciona para dashboard
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");

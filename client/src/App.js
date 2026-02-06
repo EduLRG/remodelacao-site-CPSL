@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import PrivateRoute from "./components/PrivateRoute";
 import "./styles/global.css";
 
+// Componente raiz: providers, layout global e rotas
 function App() {
   return (
     <Router>

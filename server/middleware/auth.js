@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const pool = require("../config/database");
 
-// Middleware de autenticação
+// Middleware de autenticacao: valida JWT e carrega utilizador ativo
 const authenticate = async (req, res, next) => {
   try {
     // Obter token do header
@@ -20,7 +20,7 @@ const authenticate = async (req, res, next) => {
     // Verificar se utilizador existe e está ativo
     const [users] = await pool.query(
       "SELECT id, nome, email, tipo, ativo FROM Utilizadores WHERE id = ? AND ativo = TRUE",
-      [decoded.id]
+      [decoded.id],
     );
 
     if (users.length === 0) {
@@ -53,7 +53,7 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-// Middleware para verificar se é Admin
+// Middleware para verificar se e Admin
 const isAdmin = (req, res, next) => {
   if (req.user.tipo !== "Admin") {
     return res.status(403).json({
@@ -65,7 +65,7 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
-// Middleware para verificar se é Admin ou Gestor
+// Middleware para verificar se e Admin ou Gestor
 const isAdminOrGestor = (req, res, next) => {
   if (req.user.tipo !== "Admin" && req.user.tipo !== "Gestor") {
     return res.status(403).json({

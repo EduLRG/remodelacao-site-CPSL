@@ -8,6 +8,8 @@ const {
   uploadToSupabase,
 } = require("../middleware/upload");
 
+// Rotas de documentos de transparencia
+
 // GET - Obter documentos de transparência
 router.get("/", async (req, res) => {
   try {

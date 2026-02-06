@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../styles/Users.css";
 
+// Pagina de gestao de utilizadores (admin)
 const Users = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
@@ -42,7 +43,7 @@ const Users = () => {
     fetchUsers();
   }, []);
 
-  // Manipular mudanças no formulário
+  // Manipular mudancas no formulario
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -110,7 +111,7 @@ const Users = () => {
     }
   };
 
-  // Função para ordenar ao clicar no cabeçalho
+  // Funcao para ordenar ao clicar no cabecalho
   const handleSort = (key) => {
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {

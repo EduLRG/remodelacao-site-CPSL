@@ -2,7 +2,13 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../config/database");
 const { authenticate, isAdminOrGestor } = require("../middleware/auth");
-const { upload, useSupabase, uploadToSupabase } = require("../middleware/upload");
+const {
+  upload,
+  useSupabase,
+  uploadToSupabase,
+} = require("../middleware/upload");
+
+// Rotas de media (upload e associacao)
 
 // GET - Obter media por referência
 router.get("/", async (req, res) => {
@@ -17,7 +23,7 @@ router.get("/", async (req, res) => {
 
     const [media] = await pool.query(
       "SELECT * FROM media WHERE tabela_referencia = $1 AND id_referencia = $2 ORDER BY ordem ASC",
-      [tabela_referencia, id_referencia]
+      [tabela_referencia, id_referencia],
     );
 
     res.json({ success: true, data: media });
@@ -49,7 +55,9 @@ router.post(
 
       if (req.file) {
         mimeType = req.file.mimetype;
-        tamanho = req.file.size ? (req.file.size / 1024).toFixed(2) + " KB" : null;
+        tamanho = req.file.size
+          ? (req.file.size / 1024).toFixed(2) + " KB"
+          : null;
 
         // Upload para Supabase Storage
         if (useSupabase) {
@@ -88,7 +96,7 @@ router.post(
           id_referencia,
           ordem || 0,
           req.user.id,
-        ]
+        ],
       );
 
       // result[0] may contain insertId (from wrapper) or full row (depending on driver)
@@ -102,7 +110,7 @@ router.post(
       console.error("Erro ao adicionar media:", error);
       res.status(500).json({ success: false, message: "Erro no servidor." });
     }
-  }
+  },
 );
 
 // DELETE - Eliminar media

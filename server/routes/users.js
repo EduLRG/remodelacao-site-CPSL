@@ -5,6 +5,8 @@ const { body, validationResult } = require("express-validator");
 const pool = require("../config/database");
 const { authenticate, isAdmin } = require("../middleware/auth");
 
+// Rotas de gestao de utilizadores (admin)
+
 // @route   GET /api/users
 // @desc    Obter todos os utilizadores
 // @access  Private (Admin)
@@ -14,7 +16,7 @@ router.get("/", [authenticate, isAdmin], async (req, res) => {
       `SELECT id, nome, email, tipo, ativo, data_criacao, 
        (SELECT nome FROM utilizadores u2 WHERE u2.id = utilizadores.criado_por) as criado_por_nome
        FROM utilizadores 
-       ORDER BY data_criacao DESC`
+       ORDER BY data_criacao DESC`,
     );
 
     res.json({
@@ -60,7 +62,7 @@ router.post(
       // Verificar se email já existe
       const [existing] = await pool.query(
         "SELECT id FROM utilizadores WHERE email = $1",
-        [email]
+        [email],
       );
 
       if (existing.length > 0) {
@@ -77,7 +79,7 @@ router.post(
       // Inserir utilizador
       const [result] = await pool.query(
         "INSERT INTO utilizadores (nome, email, password_hash, tipo, criado_por) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-        [nome, email, hashedPassword, tipo, req.user.id]
+        [nome, email, hashedPassword, tipo, req.user.id],
       );
 
       res.status(201).json({
@@ -97,7 +99,7 @@ router.post(
         message: "Erro no servidor.",
       });
     }
-  }
+  },
 );
 
 // @route   PUT /api/users/:id
@@ -131,7 +133,7 @@ router.put(
       // Verificar se utilizador existe
       const [existing] = await pool.query(
         "SELECT id FROM utilizadores WHERE id = $1",
-        [id]
+        [id],
       );
 
       if (existing.length === 0) {
@@ -145,7 +147,7 @@ router.put(
       if (email) {
         const [emailCheck] = await pool.query(
           "SELECT id FROM utilizadores WHERE email = $1 AND id != $2",
-          [email, id]
+          [email, id],
         );
 
         if (emailCheck.length > 0) {
@@ -189,9 +191,9 @@ router.put(
 
       await pool.query(
         `UPDATE utilizadores SET ${updates.join(
-          ", "
+          ", ",
         )} WHERE id = $${paramCount}`,
-        values
+        values,
       );
 
       res.json({
@@ -205,7 +207,7 @@ router.put(
         message: "Erro no servidor.",
       });
     }
-  }
+  },
 );
 
 // @route   DELETE /api/users/:id
@@ -226,7 +228,7 @@ router.delete("/:id", [authenticate, isAdmin], async (req, res) => {
     // Verificar se utilizador existe
     const [existing] = await pool.query(
       "SELECT id FROM utilizadores WHERE id = $1",
-      [id]
+      [id],
     );
 
     if (existing.length === 0) {
@@ -273,7 +275,7 @@ router.patch(
       // Obter estado atual
       const [user] = await pool.query(
         "SELECT id, ativo FROM utilizadores WHERE id = $1",
-        [id]
+        [id],
       );
 
       if (user.length === 0) {
@@ -304,7 +306,7 @@ router.patch(
         message: "Erro no servidor.",
       });
     }
-  }
+  },
 );
 
 module.exports = router;

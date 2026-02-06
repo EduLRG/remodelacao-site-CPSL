@@ -1,12 +1,20 @@
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
+// Estado do SMTP (cache local para evitar verificacoes repetidas)
 let transporter = null;
 let verified = false;
 let verificationTried = false;
 
+// Cria (uma vez) o transporter SMTP, se houver configuracao
 function createTransporter() {
   if (transporter) return transporter;
-  if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-    console.warn('[email] SMTP not configured (EMAIL_HOST/EMAIL_USER/EMAIL_PASSWORD missing). Email sending disabled.');
+  if (
+    !process.env.EMAIL_HOST ||
+    !process.env.EMAIL_USER ||
+    !process.env.EMAIL_PASSWORD
+  ) {
+    console.warn(
+      "[email] SMTP not configured (EMAIL_HOST/EMAIL_USER/EMAIL_PASSWORD missing). Email sending disabled.",
+    );
     return null;
   }
 
@@ -22,6 +30,7 @@ function createTransporter() {
   return transporter;
 }
 
+// Verifica credenciais SMTP apenas uma vez por ciclo de vida
 async function verifyTransporter() {
   if (verificationTried) return verified;
   verificationTried = true;
@@ -30,34 +39,41 @@ async function verifyTransporter() {
   try {
     await t.verify();
     verified = true;
-    console.log('[email] SMTP transporter verified');
+    console.log("[email] SMTP transporter verified");
   } catch (err) {
     verified = false;
-    console.error('[email] SMTP verification failed:', err && err.message ? err.message : err);
+    console.error(
+      "[email] SMTP verification failed:",
+      err && err.message ? err.message : err,
+    );
   }
   return verified;
 }
 
-/**
- * Send mail safely. Never throws — always resolves to an object {ok: boolean, info?, error?}
- */
+// Envia email de forma segura; nunca lanca erro (retorna {ok, info?, error?})
 async function sendMailSafe(mailOptions = {}) {
   const t = createTransporter();
   if (!t) {
-    return { ok: false, error: new Error('SMTP not configured') };
+    return { ok: false, error: new Error("SMTP not configured") };
   }
 
   // verify once
   if (!verificationTried) await verifyTransporter();
   if (!verified) {
-    return { ok: false, error: new Error('SMTP credentials invalid or verification failed') };
+    return {
+      ok: false,
+      error: new Error("SMTP credentials invalid or verification failed"),
+    };
   }
 
   try {
     const info = await t.sendMail(mailOptions);
     return { ok: true, info };
   } catch (err) {
-    console.error('[email] sendMail error:', err && err.message ? err.message : err);
+    console.error(
+      "[email] sendMail error:",
+      err && err.message ? err.message : err,
+    );
     return { ok: false, error: err };
   }
 }
