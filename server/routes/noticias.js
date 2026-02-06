@@ -95,11 +95,14 @@ router.post("/", [authenticate, isAdminOrGestor], async (req, res) => {
       imagem_destaque,
       publicado,
       destaques,
+      link_original,
+      fonte_nome,
+      data_criacao_original,
     } = req.body;
 
     const [result] = await pool.query(
-      `INSERT INTO noticias_eventos (titulo, resumo, conteudo, tipo, autor, imagem_destaque, destaques, publicado, data_publicacao, criado_por) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      `INSERT INTO noticias_eventos (titulo, resumo, conteudo, tipo, autor, imagem_destaque, destaques, publicado, data_publicacao, criado_por, link_original, fonte_nome, data_criacao_original) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
       [
         titulo,
         resumo,
@@ -111,6 +114,9 @@ router.post("/", [authenticate, isAdminOrGestor], async (req, res) => {
         publicado ?? false,
         publicado ? new Date() : null,
         req.user.id,
+        link_original || null,
+        fonte_nome || null,
+        data_criacao_original || null,
       ],
     );
 
@@ -136,6 +142,9 @@ router.put("/:id", [authenticate, isAdminOrGestor], async (req, res) => {
       imagem_destaque,
       publicado,
       destaques,
+      link_original,
+      fonte_nome,
+      data_criacao_original,
     } = req.body;
 
     const updates = [];
@@ -165,6 +174,18 @@ router.put("/:id", [authenticate, isAdminOrGestor], async (req, res) => {
     if (destaques !== undefined) {
       updates.push(`destaques = $${paramIndex++}`);
       values.push(destaques);
+    }
+    if (link_original !== undefined) {
+      updates.push(`link_original = $${paramIndex++}`);
+      values.push(link_original);
+    }
+    if (fonte_nome !== undefined) {
+      updates.push(`fonte_nome = $${paramIndex++}`);
+      values.push(fonte_nome);
+    }
+    if (data_criacao_original !== undefined) {
+      updates.push(`data_criacao_original = $${paramIndex++}`);
+      values.push(data_criacao_original);
     }
     if (typeof publicado !== "undefined") {
       updates.push(`publicado = $${paramIndex++}`);

@@ -39,6 +39,16 @@ const formatDate = (dateStr) => {
   }
 };
 
+const toInputDateValue = (dateStr) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const MAX_RESPOSTA_DESTAQUES = 3;
 
 const parseRespostaDestaques = (value) => {
@@ -389,6 +399,8 @@ const Home = ({ isEditMode = false }) => {
   const [loadingContent, setLoadingContent] = useState(true);
   const [loadingRespostas, setLoadingRespostas] = useState(true);
   const [loadingNoticias, setLoadingNoticias] = useState(true);
+  const [noticiasSearch, setNoticiasSearch] = useState("");
+  const [noticiasSort, setNoticiasSort] = useState("data-desc");
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
@@ -1369,6 +1381,7 @@ const Home = ({ isEditMode = false }) => {
         conteudo: "",
         tipo: "noticia",
         imagem_destaque: "",
+        link_original: "",
         destaques: [],
       });
     } else {
@@ -2063,6 +2076,48 @@ const Home = ({ isEditMode = false }) => {
     }
   };
 
+  const noticiasSearchTerm = noticiasSearch.trim().toLowerCase();
+  const filteredNoticias = noticias.filter((noticia) => {
+    if (!noticiasSearchTerm) return true;
+    const titulo = (noticia.titulo || "").toLowerCase();
+    const fonte = (noticia.fonte_nome || "").toLowerCase();
+    return (
+      titulo.includes(noticiasSearchTerm) || fonte.includes(noticiasSearchTerm)
+    );
+  });
+
+  const getNoticiaSortDate = (noticia) => {
+    const value =
+      noticia.data_criacao_original ||
+      noticia.data_publicacao ||
+      noticia.data_criacao ||
+      noticia.created_at ||
+      null;
+    const parsed = value ? new Date(value).getTime() : 0;
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
+
+  const sortedNoticias = [...filteredNoticias].sort((a, b) => {
+    if (noticiasSort === "titulo-asc") {
+      return (a.titulo || "").localeCompare(b.titulo || "", "pt-PT", {
+        sensitivity: "base",
+      });
+    }
+    if (noticiasSort === "titulo-desc") {
+      return (b.titulo || "").localeCompare(a.titulo || "", "pt-PT", {
+        sensitivity: "base",
+      });
+    }
+    if (noticiasSort === "data-asc") {
+      return getNoticiaSortDate(a) - getNoticiaSortDate(b);
+    }
+    return getNoticiaSortDate(b) - getNoticiaSortDate(a);
+  });
+
+  const visibleNoticias = noticiasSearchTerm
+    ? sortedNoticias
+    : sortedNoticias.slice(0, 5);
+
   return (
     <div className="home-page">
       <Header
@@ -2525,13 +2580,59 @@ const Home = ({ isEditMode = false }) => {
               )}
             </div>
 
+            <div className="news-controls">
+              <div className="news-search">
+                <label htmlFor="news-search-input" className="sr-only">
+                  Procurar notícias
+                </label>
+                <input
+                  id="news-search-input"
+                  type="search"
+                  value={noticiasSearch}
+                  onChange={(e) => setNoticiasSearch(e.target.value)}
+                  placeholder="Procurar por título ou fonte original"
+                  aria-label="Procurar por título ou fonte original"
+                />
+              </div>
+              <div
+                className="news-sort-buttons"
+                role="group"
+                aria-label="Ordenação de notícias"
+              >
+                <button
+                  type="button"
+                  className={`news-sort-btn ${noticiasSort.startsWith("titulo-") ? "active" : ""}`}
+                  onClick={() =>
+                    setNoticiasSort((prev) =>
+                      prev === "titulo-asc" ? "titulo-desc" : "titulo-asc",
+                    )
+                  }
+                  aria-pressed={noticiasSort.startsWith("titulo-")}
+                >
+                  Nome {noticiasSort === "titulo-asc" ? "↑" : "↓"}
+                </button>
+                <button
+                  type="button"
+                  className={`news-sort-btn ${noticiasSort.startsWith("data-") ? "active" : ""}`}
+                  onClick={() =>
+                    setNoticiasSort((prev) =>
+                      prev === "data-desc" ? "data-asc" : "data-desc",
+                    )
+                  }
+                  aria-pressed={noticiasSort.startsWith("data-")}
+                >
+                  Data de criação {noticiasSort === "data-asc" ? "↑" : "↓"}
+                </button>
+              </div>
+            </div>
+
             {loadingNoticias ? (
               <p>A carregar notícias...</p>
-            ) : noticias.length === 0 ? (
+            ) : visibleNoticias.length === 0 ? (
               <p>Mantenha-se atualizado com as nossas novidades.</p>
             ) : (
               <div className="institutional-content">
-                {noticias.slice(0, 5).map((noticia) => (
+                {visibleNoticias.map((noticia) => (
                   <div
                     key={noticia.id}
                     className="content-subsection noticia-item"
@@ -2614,11 +2715,19 @@ const Home = ({ isEditMode = false }) => {
                       />
                     </div>
 
+                    {noticia.fonte_nome && (
+                      <p className="noticia-source">📰 {noticia.fonte_nome}</p>
+                    )}
+
                     <p className="noticia-date">
                       📅{" "}
-                      {new Date(
-                        noticia.data_publicacao || noticia.created_at,
-                      ).toLocaleDateString("pt-PT")}
+                      {noticia.data_criacao_original
+                        ? `Original: ${formatDate(noticia.data_criacao_original)}`
+                        : formatDate(
+                            noticia.data_publicacao ||
+                              noticia.data_criacao ||
+                              noticia.created_at,
+                          )}
                     </p>
 
                     {isEditMode && user && (
@@ -6892,6 +7001,66 @@ const Home = ({ isEditMode = false }) => {
 
                   {renderRespostaDestaquesEditor()}
 
+                  {/* Link Original - apenas para notícias */}
+                  {editingSection === "noticias" && (
+                    <>
+                      <label>
+                        <strong>Data de criação do artigo original:</strong>
+                        <input
+                          type="date"
+                          value={toInputDateValue(
+                            editingData.data_criacao_original,
+                          )}
+                          onChange={(e) =>
+                            setEditingData({
+                              ...editingData,
+                              data_criacao_original: e.target.value || null,
+                            })
+                          }
+                        />
+                        <small className="hint">
+                          Data original do artigo (opcional)
+                        </small>
+                      </label>
+
+                      <label>
+                        <strong>Nome da Fonte (opcional):</strong>
+                        <input
+                          type="text"
+                          value={editingData.fonte_nome || ""}
+                          onChange={(e) =>
+                            setEditingData({
+                              ...editingData,
+                              fonte_nome: e.target.value,
+                            })
+                          }
+                          placeholder="Ex: Jornal de Notícias, RTP, Expresso..."
+                        />
+                        <small className="hint">
+                          Nome do jornal/site da fonte original
+                        </small>
+                      </label>
+
+                      <label>
+                        <strong>Link Original (opcional):</strong>
+                        <input
+                          type="url"
+                          value={editingData.link_original || ""}
+                          onChange={(e) =>
+                            setEditingData({
+                              ...editingData,
+                              link_original: e.target.value,
+                            })
+                          }
+                          placeholder="https://..."
+                        />
+                        <small className="hint">
+                          Link para a fonte original da notícia
+                        </small>
+                      </label>
+                    </>
+                  )}
+
                   <div className="field">
                     <strong>Conteúdo:</strong>
                     <RichTextEditor
@@ -7186,6 +7355,60 @@ const Home = ({ isEditMode = false }) => {
                   altPrefix={selectedNews.titulo || "Notícia"}
                 />
               )}
+
+              {/* Link Original */}
+              {(selectedNews.link_original || selectedNews.fonte_nome) && (
+                <div
+                  style={{
+                    marginTop: "1.5rem",
+                    padding: "1rem",
+                    backgroundColor: "#f8f9fa",
+                    borderRadius: "8px",
+                    border: "1px solid #e9ecef",
+                  }}
+                >
+                  <strong style={{ fontSize: "0.9rem", color: "#6c757d" }}>
+                    Fonte original:
+                  </strong>
+                  <br />
+                  {selectedNews.fonte_nome && (
+                    <div
+                      style={{ marginTop: "0.5rem", marginBottom: "0.5rem" }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "0.9rem",
+                          fontWeight: "500",
+                          color: "#495057",
+                        }}
+                      >
+                        📰 {selectedNews.fonte_nome}
+                      </span>
+                    </div>
+                  )}
+                  {selectedNews.link_original && (
+                    <a
+                      href={selectedNews.link_original}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: "#0056b3",
+                        textDecoration: "none",
+                        fontSize: "0.9rem",
+                        wordBreak: "break-all",
+                      }}
+                      onMouseOver={(e) =>
+                        (e.target.style.textDecoration = "underline")
+                      }
+                      onMouseOut={(e) =>
+                        (e.target.style.textDecoration = "none")
+                      }
+                    >
+                      🔗 {selectedNews.link_original}
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
             <div
               className="edit-modal-footer"
@@ -7193,11 +7416,20 @@ const Home = ({ isEditMode = false }) => {
             >
               <div />
               <div style={{ textAlign: "right" }}>
+                {selectedNews.fonte_nome && (
+                  <small className="project-date">
+                    📰 {selectedNews.fonte_nome}
+                  </small>
+                )}
                 <small className="project-date">
                   📅{" "}
-                  {new Date(
-                    selectedNews.data_publicacao || selectedNews.created_at,
-                  ).toLocaleDateString("pt-PT")}
+                  {selectedNews.data_criacao_original
+                    ? `Original: ${formatDate(selectedNews.data_criacao_original)}`
+                    : formatDate(
+                        selectedNews.data_publicacao ||
+                          selectedNews.data_criacao ||
+                          selectedNews.created_at,
+                      )}
                 </small>
               </div>
             </div>
@@ -7787,6 +8019,66 @@ const Home = ({ isEditMode = false }) => {
                   )}
 
                 {renderRespostaDestaquesEditor()}
+
+                {/* Link Original - apenas para notícias */}
+                {editingSection === "noticias" && (
+                  <>
+                    <label>
+                      <strong>Data de criação do artigo original:</strong>
+                      <input
+                        type="date"
+                        value={toInputDateValue(
+                          editingData.data_criacao_original,
+                        )}
+                        onChange={(e) =>
+                          setEditingData({
+                            ...editingData,
+                            data_criacao_original: e.target.value || null,
+                          })
+                        }
+                      />
+                      <small className="hint">
+                        Data original do artigo (opcional)
+                      </small>
+                    </label>
+
+                    <label>
+                      <strong>Nome da Fonte (opcional):</strong>
+                      <input
+                        type="text"
+                        value={editingData.fonte_nome || ""}
+                        onChange={(e) =>
+                          setEditingData({
+                            ...editingData,
+                            fonte_nome: e.target.value,
+                          })
+                        }
+                        placeholder="Ex: Jornal de Notícias, RTP, Expresso..."
+                      />
+                      <small className="hint">
+                        Nome do jornal/site da fonte original
+                      </small>
+                    </label>
+
+                    <label>
+                      <strong>Link Original (opcional):</strong>
+                      <input
+                        type="url"
+                        value={editingData.link_original || ""}
+                        onChange={(e) =>
+                          setEditingData({
+                            ...editingData,
+                            link_original: e.target.value,
+                          })
+                        }
+                        placeholder="https://..."
+                      />
+                      <small className="hint">
+                        Link para a fonte original da notícia
+                      </small>
+                    </label>
+                  </>
+                )}
 
                 {/* URL de Vídeo - apenas para seções personalizadas */}
                 {editingSecaoPersonalizada && (
