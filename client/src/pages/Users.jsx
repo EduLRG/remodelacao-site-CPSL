@@ -19,7 +19,10 @@ const Users = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("todos");
   const [filterStatus, setFilterStatus] = useState("todos");
-  const [sortOrder, setSortOrder] = useState("recentes");
+  const [sortConfig, setSortConfig] = useState({
+    key: "data_criacao",
+    direction: "desc",
+  });
 
   // Carregar utilizadores
   const fetchUsers = async () => {
@@ -96,7 +99,7 @@ const Users = () => {
 
       if (response.data.success) {
         setSuccess(
-          `Utilizador ${currentStatus ? "desativado" : "ativado"} com sucesso!`
+          `Utilizador ${currentStatus ? "desativado" : "ativado"} com sucesso!`,
         );
         fetchUsers();
         setTimeout(() => setSuccess(""), 3000);
@@ -105,6 +108,15 @@ const Users = () => {
       setError("Erro ao alterar estado do utilizador.");
       setTimeout(() => setError(""), 3000);
     }
+  };
+
+  // Função para ordenar ao clicar no cabeçalho
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
   };
 
   // Filtrar e ordenar utilizadores
@@ -121,12 +133,40 @@ const Users = () => {
       return matchesSearch && matchesType && matchesStatus;
     })
     .sort((a, b) => {
-      if (sortOrder === "recentes") {
-        return new Date(b.data_criacao) - new Date(a.data_criacao);
-      } else if (sortOrder === "antigos") {
-        return new Date(a.data_criacao) - new Date(b.data_criacao);
-      } else if (sortOrder === "nome") {
-        return (a.nome || "").localeCompare(b.nome || "");
+      if (!sortConfig.key) return 0;
+
+      let aValue, bValue;
+
+      switch (sortConfig.key) {
+        case "nome":
+          aValue = (a.nome || "").toLowerCase();
+          bValue = (b.nome || "").toLowerCase();
+          break;
+        case "email":
+          aValue = (a.email || "").toLowerCase();
+          bValue = (b.email || "").toLowerCase();
+          break;
+        case "tipo":
+          aValue = (a.tipo || "").toLowerCase();
+          bValue = (b.tipo || "").toLowerCase();
+          break;
+        case "estado":
+          aValue = a.ativo ? 1 : 0;
+          bValue = b.ativo ? 1 : 0;
+          break;
+        case "data_criacao":
+          aValue = new Date(a.data_criacao || 0).getTime();
+          bValue = new Date(b.data_criacao || 0).getTime();
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === "asc" ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === "asc" ? 1 : -1;
       }
       return 0;
     });
@@ -199,14 +239,6 @@ const Users = () => {
             <option value="ativos">Ativos</option>
             <option value="inativos">Inativos</option>
           </select>
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-          >
-            <option value="recentes">Mais recentes</option>
-            <option value="antigos">Mais antigos</option>
-            <option value="nome">Nome A-Z</option>
-          </select>
         </div>
       </div>
 
@@ -217,11 +249,46 @@ const Users = () => {
           <table className="users-table">
             <thead>
               <tr>
-                <th>Nome</th>
-                <th>Email</th>
-                <th>Tipo</th>
-                <th>Estado</th>
-                <th>Data de Criação</th>
+                <th
+                  onClick={() => handleSort("nome")}
+                  style={{ cursor: "pointer" }}
+                >
+                  Nome{" "}
+                  {sortConfig.key === "nome" &&
+                    (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </th>
+                <th
+                  onClick={() => handleSort("email")}
+                  style={{ cursor: "pointer" }}
+                >
+                  Email{" "}
+                  {sortConfig.key === "email" &&
+                    (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </th>
+                <th
+                  onClick={() => handleSort("tipo")}
+                  style={{ cursor: "pointer" }}
+                >
+                  Tipo{" "}
+                  {sortConfig.key === "tipo" &&
+                    (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </th>
+                <th
+                  onClick={() => handleSort("estado")}
+                  style={{ cursor: "pointer" }}
+                >
+                  Estado{" "}
+                  {sortConfig.key === "estado" &&
+                    (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </th>
+                <th
+                  onClick={() => handleSort("data_criacao")}
+                  style={{ cursor: "pointer" }}
+                >
+                  Data de Criação{" "}
+                  {sortConfig.key === "data_criacao" &&
+                    (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </th>
                 <th>Criado Por</th>
                 <th>Ações</th>
               </tr>

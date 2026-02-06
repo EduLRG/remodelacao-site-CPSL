@@ -1,4 +1,4 @@
-/* Simple styles for messages admin page */
+/* Simple styles for messages admin page - COPIADO EXATAMENTE DAS INSCRIÇÕES */
 .messages-page {
   padding: 20px;
 }
@@ -79,43 +79,69 @@
   box-shadow: 0 0 0 3px rgba(255, 153, 102, 0.1);
 }
 
-.messages-list ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+/* Tabela de mensagens - COPIADO EXATAMENTE das inscrições */
+.messages-table-wrapper {
+  overflow-x: auto;
 }
-.message-item {
-  display: flex;
-  justify-content: space-between;
+
+.messages-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+}
+
+.messages-table th,
+.messages-table td {
   padding: 12px;
   border-bottom: 1px solid #eee;
+  text-align: left;
 }
-.message-item.unread {
-  background: #fff9f9;
+
+.messages-table td:last-child {
+  text-align: right;
 }
-.message-item.read {
+
+.messages-table td .btn-small + .btn-small {
+  margin-left: 8px;
+}
+
+.messages-table th {
+  background: #f8f9fb;
+  font-weight: 700;
+}
+
+.messages-table th:last-child {
+  text-align: right;
+}
+
+.messages-table tr:hover {
+  background: #f5f7fb;
+}
+
+.messages-table tr.unread {
+  background: #fff9f4;
+}
+
+/* Botões - COPIADOS EXATAMENTE das inscrições */
+.btn-refresh {
+  padding: 10px 20px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid #d0d7e2;
   background: #fff;
-}
-.msg-left {
   cursor: pointer;
-}
-.msg-name {
-  display: block;
-}
-.msg-subject {
-  color: #333;
-}
-.msg-meta {
-  color: #888;
-  font-size: 0.9rem;
-}
-.msg-actions {
-  display: flex;
-  gap: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  display: inline-flex;
   align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
 }
+
 .btn-small {
-  padding: 8px 12px;
+  padding: 0;
   border-radius: 6px;
   border: 1px solid var(--primary-color);
   background: var(--primary-color);
@@ -123,6 +149,14 @@
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s ease;
+  min-width: 50px;
+  width: 50px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-size: 0.9rem;
 }
 
 .btn-small:hover {
@@ -139,18 +173,8 @@
 .btn-small.btn-delete:hover {
   background: #ffd9dc;
 }
-.btn-refresh {
-  background: var(--primary-color);
-  color: #000;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-}
-.btn-refresh:hover {
-  background: var(--primary-hover);
-}
+
+/* Modal */
 .message-modal {
   position: fixed;
   inset: 0;
@@ -160,6 +184,7 @@
   justify-content: center;
   z-index: 9999;
 }
+
 .message-modal-content {
   background: white;
   padding: 20px;
@@ -169,16 +194,19 @@
   max-height: 90vh;
   overflow: auto;
 }
+
 .reply-area textarea {
   width: 100%;
   margin-top: 12px;
 }
+
 .reply-actions {
   display: flex;
   gap: 8px;
   margin-top: 8px;
   justify-content: flex-end;
 }
+
 .btn-save {
   background: var(--primary-color);
   color: white;
@@ -186,13 +214,10 @@
   padding: 10px 16px;
   border-radius: 6px;
 }
+
 .btn-cancel {
   background: #f5f5f5;
   border: 1px solid #ddd;
   padding: 8px 12px;
   border-radius: 6px;
-}
-/* ensure delete button has visible border and pointer */
-.btn-delete {
-  border: 1px solid #ffb3b3;
 }

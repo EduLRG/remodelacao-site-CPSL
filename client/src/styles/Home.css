@@ -594,7 +594,7 @@
 }
 
 .edit-modal-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #ff6b35;
   color: white;
   padding: 20px 24px;
   display: flex;

@@ -30,7 +30,10 @@ const Inscriptions = () => {
   const [selected, setSelected] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("todas");
-  const [sortOrder, setSortOrder] = useState("recentes");
+  const [sortConfig, setSortConfig] = useState({
+    key: "data",
+    direction: "desc",
+  });
 
   const dispatchUnread = (list) => {
     const unread = list.filter((it) => !it.lido).length;
@@ -71,7 +74,7 @@ const Inscriptions = () => {
           const sorted = data.sort(
             (a, b) =>
               new Date(b.criado_em || b.created_at || 0) -
-              new Date(a.criado_em || a.created_at || 0)
+              new Date(a.criado_em || a.created_at || 0),
           );
           setItemsByType((prev) => ({ ...prev, [type]: sorted }));
           dispatchUnread(sorted);
@@ -83,7 +86,7 @@ const Inscriptions = () => {
         setLoading(false);
       }
     },
-    [fetchUnreadTotals, selectedType]
+    [fetchUnreadTotals, selectedType],
   );
 
   useEffect(() => {
@@ -95,7 +98,7 @@ const Inscriptions = () => {
     const list = itemsByType[selectedType] || [];
     // marcar como lido localmente
     const updatedList = list.map((row) =>
-      row.id === it.id ? { ...row, lido: true } : row
+      row.id === it.id ? { ...row, lido: true } : row,
     );
     setItemsByType((prev) => ({ ...prev, [selectedType]: updatedList }));
     dispatchUnread(updatedList);
@@ -105,7 +108,7 @@ const Inscriptions = () => {
       // revert if failed
       setItemsByType((prev) => {
         const reverted = (prev[selectedType] || []).map((row) =>
-          row.id === it.id ? { ...row, lido: it.lido } : row
+          row.id === it.id ? { ...row, lido: it.lido } : row,
         );
         dispatchUnread(reverted);
         return { ...prev, [selectedType]: reverted };
@@ -118,7 +121,7 @@ const Inscriptions = () => {
     try {
       await api.delete(`${FORM_ENDPOINTS[selectedType]}/${id}`);
       const updated = (itemsByType[selectedType] || []).filter(
-        (row) => row.id !== id
+        (row) => row.id !== id,
       );
       setItemsByType((prev) => ({ ...prev, [selectedType]: updated }));
       dispatchUnread(updated);
@@ -146,6 +149,15 @@ const Inscriptions = () => {
 
   const items = itemsByType[selectedType] || [];
 
+  // Função para ordenar ao clicar no cabeçalho
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
   // Filtrar e ordenar inscrições
   const filteredItems = items
     .filter((it) => {
@@ -162,12 +174,44 @@ const Inscriptions = () => {
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
-      const dateA = new Date(a.criado_em || a.created_at || 0);
-      const dateB = new Date(b.criado_em || b.created_at || 0);
-      if (sortOrder === "recentes") {
-        return dateB - dateA;
-      } else if (sortOrder === "antigas") {
-        return dateA - dateB;
+      if (!sortConfig.key) return 0;
+
+      let aValue, bValue;
+
+      switch (sortConfig.key) {
+        case "nome":
+          aValue = (a.nome_completo || "").toLowerCase();
+          bValue = (b.nome_completo || "").toLowerCase();
+          break;
+        case "nif":
+          aValue = a.nif || "";
+          bValue = b.nif || "";
+          break;
+        case "concelho":
+          aValue = (a.concelho || "").toLowerCase();
+          bValue = (b.concelho || "").toLowerCase();
+          break;
+        case "distrito":
+          aValue = (a.distrito || "").toLowerCase();
+          bValue = (b.distrito || "").toLowerCase();
+          break;
+        case "estado":
+          aValue = a.lido ? 1 : 0;
+          bValue = b.lido ? 1 : 0;
+          break;
+        case "data":
+          aValue = new Date(a.criado_em || a.created_at || 0).getTime();
+          bValue = new Date(b.criado_em || b.created_at || 0).getTime();
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === "asc" ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === "asc" ? 1 : -1;
       }
       return 0;
     });
@@ -238,13 +282,6 @@ const Inscriptions = () => {
             <option value="novas">Não lidas</option>
             <option value="lidas">Lidas</option>
           </select>
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-          >
-            <option value="recentes">Mais recentes</option>
-            <option value="antigas">Mais antigas</option>
-          </select>
         </div>
       </div>
 
@@ -262,22 +299,78 @@ const Inscriptions = () => {
             <thead>
               {selectedType === "creche" ? (
                 <tr>
-                  <th>Nome</th>
+                  <th
+                    onClick={() => handleSort("nome")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Nome{" "}
+                    {sortConfig.key === "nome" &&
+                      (sortConfig.direction === "asc" ? "↑" : "↓")}
+                  </th>
                   <th>Creche</th>
-                  <th>NIF</th>
+                  <th
+                    onClick={() => handleSort("nif")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    NIF{" "}
+                    {sortConfig.key === "nif" &&
+                      (sortConfig.direction === "asc" ? "↑" : "↓")}
+                  </th>
                   <th>Localidade</th>
                   <th>Contacto</th>
-                  <th>Data</th>
+                  <th
+                    onClick={() => handleSort("data")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Data{" "}
+                    {sortConfig.key === "data" &&
+                      (sortConfig.direction === "asc" ? "↑" : "↓")}
+                  </th>
                   <th></th>
                 </tr>
               ) : (
                 <tr>
-                  <th>Nome</th>
-                  <th>NIF</th>
+                  <th
+                    onClick={() => handleSort("nome")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Nome{" "}
+                    {sortConfig.key === "nome" &&
+                      (sortConfig.direction === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th
+                    onClick={() => handleSort("nif")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    NIF{" "}
+                    {sortConfig.key === "nif" &&
+                      (sortConfig.direction === "asc" ? "↑" : "↓")}
+                  </th>
                   <th>Contacto</th>
-                  <th>Concelho</th>
-                  <th>Distrito</th>
-                  <th>Data</th>
+                  <th
+                    onClick={() => handleSort("concelho")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Concelho{" "}
+                    {sortConfig.key === "concelho" &&
+                      (sortConfig.direction === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th
+                    onClick={() => handleSort("distrito")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Distrito{" "}
+                    {sortConfig.key === "distrito" &&
+                      (sortConfig.direction === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th
+                    onClick={() => handleSort("data")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Data{" "}
+                    {sortConfig.key === "data" &&
+                      (sortConfig.direction === "asc" ? "↑" : "↓")}
+                  </th>
                   <th></th>
                 </tr>
               )}

@@ -126,10 +126,18 @@
   border-bottom: 2px solid #dee2e6;
 }
 
+.users-table th:last-child {
+  text-align: right;
+}
+
 .users-table td {
   padding: 1rem;
   border-bottom: 1px solid #f0f0f0;
   color: #495057;
+}
+
+.users-table td:last-child {
+  text-align: right;
 }
 
 .users-table tbody tr:hover {
@@ -178,6 +186,7 @@
 .action-buttons {
   display: flex;
   gap: 0.5rem;
+  justify-content: flex-end;
 }
 
 .btn-icon {

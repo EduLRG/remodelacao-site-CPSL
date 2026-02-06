@@ -10,7 +10,10 @@ const Messages = () => {
   const [selected, setSelected] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("todas");
-  const [sortOrder, setSortOrder] = useState("recentes");
+  const [sortConfig, setSortConfig] = useState({
+    key: "data",
+    direction: "desc",
+  });
 
   const fetchMensagens = async () => {
     try {
@@ -37,7 +40,7 @@ const Messages = () => {
         // also dispatch exact server unread count (before dedupe) so other components can rely on server truth
         try {
           const rawUnread = (resp.data.data || []).filter(
-            (it) => !it.respondido
+            (it) => !it.respondido,
           ).length;
           const evServer = new CustomEvent("mensagens:server", {
             detail: { unread: rawUnread },
@@ -66,14 +69,14 @@ const Messages = () => {
         // optimistically mark as read in UI so header count updates immediately
         setMensagens((prev) =>
           prev.map((it) =>
-            it.id === resp.data.data.id ? { ...it, respondido: true } : it
-          )
+            it.id === resp.data.data.id ? { ...it, respondido: true } : it,
+          ),
         );
         markRead(resp.data.data.id);
       } else {
         setSelected(m);
         setMensagens((prev) =>
-          prev.map((it) => (it.id === m.id ? { ...it, respondido: true } : it))
+          prev.map((it) => (it.id === m.id ? { ...it, respondido: true } : it)),
         );
         markRead(m.id);
       }
@@ -81,7 +84,7 @@ const Messages = () => {
       console.error("Erro ao obter mensagem:", err);
       setSelected(m);
       setMensagens((prev) =>
-        prev.map((it) => (it.id === m.id ? { ...it, respondido: true } : it))
+        prev.map((it) => (it.id === m.id ? { ...it, respondido: true } : it)),
       );
       markRead(m.id);
     }
@@ -96,7 +99,7 @@ const Messages = () => {
     } catch (err) {
       // revert optimistic update if server fails
       setMensagens((prev) =>
-        prev.map((it) => (it.id === id ? { ...it, respondido: false } : it))
+        prev.map((it) => (it.id === id ? { ...it, respondido: false } : it)),
       );
       console.error(err);
     }
@@ -119,6 +122,15 @@ const Messages = () => {
 
   const unreadCount = mensagens.filter((m) => !m.respondido).length;
 
+  // Função para ordenar ao clicar no cabeçalho
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
   // Filtrar e ordenar mensagens
   const filteredMensagens = mensagens
     .filter((m) => {
@@ -134,12 +146,36 @@ const Messages = () => {
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
-      const dateA = new Date(a.data_submissao || a.created_at || 0);
-      const dateB = new Date(b.data_submissao || b.created_at || 0);
-      if (sortOrder === "recentes") {
-        return dateB - dateA;
-      } else if (sortOrder === "antigas") {
-        return dateA - dateB;
+      if (!sortConfig.key) return 0;
+
+      let aValue, bValue;
+
+      switch (sortConfig.key) {
+        case "nome":
+          aValue = (a.nome || "").toLowerCase();
+          bValue = (b.nome || "").toLowerCase();
+          break;
+        case "email":
+          aValue = (a.email || "").toLowerCase();
+          bValue = (b.email || "").toLowerCase();
+          break;
+        case "assunto":
+          aValue = (a.assunto || "").toLowerCase();
+          bValue = (b.assunto || "").toLowerCase();
+          break;
+        case "data":
+          aValue = new Date(a.data_submissao || a.created_at || 0).getTime();
+          bValue = new Date(b.data_submissao || b.created_at || 0).getTime();
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === "asc" ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === "asc" ? 1 : -1;
       }
       return 0;
     });
@@ -193,13 +229,6 @@ const Messages = () => {
             <option value="novas">Não lidas</option>
             <option value="lidas">Lidas</option>
           </select>
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-          >
-            <option value="recentes">Mais recentes</option>
-            <option value="antigas">Mais antigas</option>
-          </select>
         </div>
       </div>
 
@@ -212,38 +241,85 @@ const Messages = () => {
             : "Sem mensagens."}
         </p>
       ) : (
-        <div className="messages-list">
-          <ul>
-            {filteredMensagens.map((m) => (
-              <li
-                key={m.id}
-                className={`message-item ${m.respondido ? "read" : "unread"}`}
-              >
-                <div className="msg-left" onClick={() => openMessage(m)}>
-                  <strong className="msg-name">{m.nome}</strong>
-                  <div className="msg-subject">{m.assunto}</div>
-                  <div className="msg-meta">
-                    {m.email} •{" "}
-                    {new Date(m.data_submissao || m.created_at).toLocaleString(
-                      "pt-PT"
-                    )}
-                  </div>
-                </div>
-                <div className="msg-actions">
-                  {/* keep only Ver and Eliminar per request */}
-                  <button onClick={() => openMessage(m)} className="btn-small">
-                    Ver
-                  </button>
-                  <button
-                    onClick={() => handleDelete(m.id)}
-                    className="btn-small btn-delete"
+        <div className="messages-table-wrapper">
+          <table className="messages-table">
+            <thead>
+              <tr>
+                <th
+                  onClick={() => handleSort("nome")}
+                  style={{ cursor: "pointer" }}
+                >
+                  Nome{" "}
+                  {sortConfig.key === "nome" &&
+                    (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </th>
+                <th>E-mail</th>
+                <th
+                  onClick={() => handleSort("assunto")}
+                  style={{ cursor: "pointer" }}
+                >
+                  Assunto{" "}
+                  {sortConfig.key === "assunto" &&
+                    (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </th>
+                <th
+                  onClick={() => handleSort("data")}
+                  style={{ cursor: "pointer" }}
+                >
+                  Data{" "}
+                  {sortConfig.key === "data" &&
+                    (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMensagens.map((m) => (
+                <tr key={m.id} className={m.respondido ? "" : "unread"}>
+                  <td
+                    onClick={() => openMessage(m)}
+                    style={{ cursor: "pointer" }}
                   >
-                    🗑️
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                    <strong>{m.nome}</strong>
+                  </td>
+                  <td
+                    onClick={() => openMessage(m)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {m.email}
+                  </td>
+                  <td
+                    onClick={() => openMessage(m)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {m.assunto}
+                  </td>
+                  <td
+                    onClick={() => openMessage(m)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {new Date(
+                      m.data_submissao || m.created_at,
+                    ).toLocaleDateString("pt-PT")}
+                  </td>
+                  <td>
+                    <button
+                      onClick={() => openMessage(m)}
+                      className="btn-small"
+                    >
+                      Ver
+                    </button>
+                    <button
+                      onClick={() => handleDelete(m.id)}
+                      className="btn-small btn-delete"
+                    >
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -260,7 +336,7 @@ const Messages = () => {
             <p>
               <strong>Data:</strong>{" "}
               {new Date(
-                selected.data_submissao || selected.created_at
+                selected.data_submissao || selected.created_at,
               ).toLocaleString("pt-PT")}
             </p>
             <hr />

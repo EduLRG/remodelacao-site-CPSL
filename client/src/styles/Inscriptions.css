@@ -43,15 +43,31 @@
   align-items: center;
 }
 
+/* Padronizando o tamanho do botão Voltar para ficar igual ao Atualizar */
+.inscriptions-actions .btn-back {
+  padding: 10px 20px;
+  height: 44px;
+  font-size: 1rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .btn-refresh {
   background: var(--primary-color);
   color: #000;
   border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 10px 20px;
+  height: 44px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 500;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .btn-refresh:hover {
@@ -182,6 +198,10 @@
   text-align: left;
 }
 
+.inscriptions-table td:last-child {
+  text-align: right;
+}
+
 .inscriptions-table td .btn-small + .btn-small {
   margin-left: 8px;
 }
@@ -189,6 +209,10 @@
 .inscriptions-table th {
   background: #f8f9fb;
   font-weight: 700;
+}
+
+.inscriptions-table th:last-child {
+  text-align: right;
 }
 
 .inscriptions-table tr:hover {
@@ -204,7 +228,7 @@
 }
 
 .btn-small {
-  padding: 8px 12px;
+  padding: 0;
   border-radius: 6px;
   border: 1px solid var(--primary-color);
   background: var(--primary-color);
@@ -212,6 +236,14 @@
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s ease;
+  min-width: 50px;
+  width: 50px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-size: 0.9rem;
 }
 
 .btn-small:hover {
@@ -226,19 +258,6 @@
 }
 
 .btn-small.btn-delete:hover {
-  background: #ffd9dc;
-}
-
-.btn-delete {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #ffc5c7;
-  background: #fff5f5;
-  color: #c0392b;
-  cursor: pointer;
-}
-
-.btn-delete:hover {
   background: #ffd9dc;
 }
 
